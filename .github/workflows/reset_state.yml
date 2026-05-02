@@ -1,0 +1,40 @@
+name: Reset State
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Nome profilo da azzerare (lascia vuoto per tutti)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reset state
+        run: |
+          if [ -z "${{ github.event.inputs.profile }}" ]; then
+            rm -f state/*.json
+            echo "Azzerati tutti i profili"
+          else
+            rm -f "state/${{ github.event.inputs.profile }}.json"
+            echo "Azzerato profilo: ${{ github.event.inputs.profile }}"
+          fi
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state/
+          git diff --staged --quiet || git commit -m "chore: azzera stato profilo(i)"
+          git push
