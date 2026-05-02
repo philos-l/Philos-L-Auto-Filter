@@ -1,0 +1,57 @@
+name: Add New User
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Nome del profilo (es. mario) — diventa il nome del file .toml'
+        required: true
+      chat_id:
+        description: 'Chat ID Telegram numerico (es. 684963912)'
+        required: true
+      keywords:
+        description: 'Parole chiave separate da virgola (es. phd, postdoc, metaphysics)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  add-user:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Create profile
+        run: |
+          python3 - <<'PYEOF'
+          import os
+
+          name     = "${{ github.event.inputs.name }}".strip()
+          chat_id  = "${{ github.event.inputs.chat_id }}".strip()
+          keywords = [k.strip() for k in "${{ github.event.inputs.keywords }}".split(",") if k.strip()]
+
+          lines = ["keywords = [\n"]
+          for kw in keywords:
+              lines.append(f'    "{kw}",\n')
+          lines.append("]\n\n")
+          lines.append(f'telegram_chat_id = "{chat_id}"\n')
+
+          path = f"profiles/{name}.toml"
+          with open(path, "w") as f:
+              f.writelines(lines)
+          print(f"Created {path} with {len(keywords)} keywords")
+          PYEOF
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add profiles/
+          git commit -m "feat: add profile for ${{ github.event.inputs.name }}"
+          git push

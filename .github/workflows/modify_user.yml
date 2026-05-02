@@ -1,0 +1,61 @@
+name: Modify User
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Nome del profilo da modificare (es. mario)'
+        required: true
+      keywords:
+        description: 'Nuove parole chiave separate da virgola (sostituiscono le vecchie)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  modify-user:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Update profile keywords
+        run: |
+          python3 - <<'PYEOF'
+          import os, sys, tomllib
+
+          name     = "${{ github.event.inputs.name }}".strip()
+          keywords = [k.strip() for k in "${{ github.event.inputs.keywords }}".split(",") if k.strip()]
+
+          path = f"profiles/{name}.toml"
+          if not os.path.exists(path):
+              print(f"ERROR: profile {name} does not exist")
+              sys.exit(1)
+
+          with open(path, "rb") as f:
+              data = tomllib.load(f)
+          chat_id = data["telegram_chat_id"]
+
+          lines = ["keywords = [\n"]
+          for kw in keywords:
+              lines.append(f'    "{kw}",\n')
+          lines.append("]\n\n")
+          lines.append(f'telegram_chat_id = "{chat_id}"\n')
+
+          with open(path, "w") as f:
+              f.writelines(lines)
+          print(f"Updated {path} with {len(keywords)} keywords")
+          PYEOF
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add profiles/
+          git diff --staged --quiet || git commit -m "feat: update keywords for ${{ github.event.inputs.name }}"
+          git push

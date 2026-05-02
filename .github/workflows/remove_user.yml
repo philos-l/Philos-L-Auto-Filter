@@ -1,0 +1,36 @@
+name: Remove User
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Nome del profilo da rimuovere (es. mario)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  remove-user:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Remove profile and state
+        run: |
+          rm -f "profiles/${{ github.event.inputs.name }}.toml"
+          rm -f "state/${{ github.event.inputs.name }}.json"
+          echo "Removed profile: ${{ github.event.inputs.name }}"
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add profiles/ state/
+          git diff --staged --quiet || git commit -m "feat: remove profile for ${{ github.event.inputs.name }}"
+          git push
