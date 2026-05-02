@@ -30,9 +30,9 @@ from email import policy
 # CONFIGURAZIONE IMAP — unica per tutti i profili
 # ---------------------------------------------------------------------------
 
-IMAP_HOST  = "imap.gmail.com"
-IMAP_USER  = "philos.l.list@gmail.com"
-IMAP_PASS  = os.environ.get("IMAP_PASS", "citb ekjo lnik kwqt ")   # App Password Gmail
+IMAP_HOST  = os.environ.get("IMAP_HOST", "")
+IMAP_USER  = os.environ.get("IMAP_USER", "")
+IMAP_PASS  = os.environ.get("IMAP_PASS", "")
 
 # Label IMAP da monitorare
 IMAP_LABEL = "INBOX"
@@ -42,7 +42,7 @@ LISTSERV_BASE = "https://listserv.liv.ac.uk/cgi-bin/wa"
 
 # Bot Telegram condiviso da tutti i profili
 # Crealo con @BotFather su Telegram
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "8712823263:AAEG8sjPEeqvshplpJR04-EiqjQJnSAMmzM")
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 
 # ---------------------------------------------------------------------------
 # PATH FILE
