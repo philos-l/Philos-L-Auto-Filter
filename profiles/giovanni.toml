@@ -1,0 +1,16 @@
+# Parole chiave da cercare nelle email (non fa differenza maiuscole/minuscole)
+# Aggiungi o rimuovi liberamente. Esempi utili:
+keywords = [
+    "metaphysics",
+    "ontology",
+    "Phenomenology",
+]
+
+# ── Telegram ────────────────────────────────────────────────────────────────
+# Bot: Philos-L Notification Bot → https://t.me/philos_l_notification_bot
+#
+# Per trovare il tuo chat_id:
+# 1. Manda /start al bot (o clicca il pulsante "Avvia" nella chat con il bot)
+# 2. Apri nel browser: https://api.telegram.org/bot<TOKEN>/getUpdates
+# 3. Copia il numero in "id" dentro "chat"
+telegram_chat_id = "684963912"
