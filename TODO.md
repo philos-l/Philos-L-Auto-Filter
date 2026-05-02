@@ -1,5 +1,9 @@
 # TODO
 
+## Revisione finale docs e workflow
+- Controllo di README.md, ADMIN.md e tutti i workflow `.github/workflows/`
+- Verificare correttezza, completezza e coerenza tra i documenti
+
 ## Documentazione tecnica del codice
 - Spiegazione funzione per funzione di `mail_monitor_multi.py`
 - Flusso dati end-to-end (IMAP → parsing → archivio → Telegram)
