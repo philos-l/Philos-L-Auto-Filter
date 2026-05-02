@@ -207,15 +207,13 @@ def send_telegram(token, chat_id, text):
 
 def format_message(subject, sender, date_str, body, matched_kw, archive_link=""):
     kw_list  = ", ".join(f"<code>{k}</code>" for k in matched_kw)
-    preview  = html.escape(body[:400] + "…" if len(body) > 400 else body)
     date_str = f"\n📅 {html.escape(date_str)}" if date_str else ""
     link_str = f"\n🔗 <a href=\"{archive_link}\">Leggi l'annuncio</a>" if archive_link else ""
     return (
         f"🔔 <b>PHILOS-L Monitor</b>\n"
         f"🔑 Keyword: {kw_list}{date_str}{link_str}\n"
         f"👤 {html.escape(sender)}\n\n"
-        f"<b>{html.escape(subject)}</b>\n\n"
-        f"{preview}"
+        f"<b>{html.escape(subject)}</b>"
     )
 
 
