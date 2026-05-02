@@ -1,5 +1,10 @@
 # TODO
 
+## Esecuzione automatica GitHub Actions
+- Verificare se i cron schedulati partono da soli o solo manualmente
+- Al momento sembra che le run automatiche non scattino (solo quelle manuali)
+- Se conferma il problema: valutare alternative (cron-job.org, Cloudflare Workers, GitLab CI, VPS)
+
 ## Revisione finale docs e workflow
 - Controllo di README.md, ADMIN.md e tutti i workflow `.github/workflows/`
 - Verificare correttezza, completezza e coerenza tra i documenti
