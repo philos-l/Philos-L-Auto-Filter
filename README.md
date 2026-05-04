@@ -94,3 +94,9 @@ No. Ricevi una notifica solo se c'è un match. Se non c'è niente di interessant
 
 **Cos'è PHILOS-L?**
 La principale mailing list internazionale di filosofia accademica, attiva dal 1992. Ci girano annunci di dottorati, borse, postdoc, call for papers, conferenze e discussioni filosofiche. Maggiori info: https://listserv.liv.ac.uk/cgi-bin/wa?A0=PHILOS-L
+
+---
+
+## Per l'amministratore
+
+La guida completa per la gestione del bot (aggiungere/rimuovere utenti, controllare gli errori, aggiornare le credenziali) si trova in [docs/ADMIN.md](docs/ADMIN.md).

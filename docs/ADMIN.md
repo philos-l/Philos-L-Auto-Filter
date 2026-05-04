@@ -116,31 +116,48 @@ Vedrai una lista di run con dei pallini:
 - ✅ **Verde** = tutto bene
 - ❌ **Rosso** = qualcosa non ha funzionato
 
+![Pagina Principale di Github Actions](/docs/images/image-4.png)
+*Pagina Principale di Github Actions*
+
 Se vedi pallini rossi recenti, vai al punto C.2.
 
 ### C.2 — Cosa fare se un workflow fallisce
 
-1. Clicca sulla run con il pallino rosso
+1. Clicca sulla esecuzione con il pallino rosso
 2. Clicca sul job che è fallito (di solito è uno solo)
 3. Scorri i passaggi (steps) — quello fallito ha la X rossa
 4. Clicca sul passaggio rosso per espanderlo
 5. Copia tutto il testo dell'errore
 6. Manda allo sviluppatore il messaggio + il link della run
 
+![Esempio di esecuzione fallita](/docs/images/image-5.png)
+*Esempio di esecuzione fallita*
+
+![Singolo job fallito](/docs/images/image-6.png)
+*Singolo job fallito*
+
+![Log di errore del job fallito](/docs/images/image-7.png)
+*Log di errore del job fallito*
+
 ### C.3 — Un utente segnala "non ricevo notifiche"
 
 Controlla in ordine:
 
 1. Vai su **Actions** e verifica che le ultime run siano verdi
-2. Se sono tutte verdi: probabilmente nessuna mail ha matchato le sue keyword. Chiedigli quanto aspetta (su PHILOS-L per certe keyword possono passare giorni)
-3. Verifica che il suo profilo esista: https://github.com/philos-l/Philos-L-Auto-Filter/tree/main/profiles
+2. Se sono tutte verdi: probabilmente nessuna mail ha matchato le sue keyword. Chiedigli le keyword e fai una ricerca manuale sul sito.
+3. Verifica che il suo profilo esista nella sezione [Profiles](https://github.com/philos-l/Philos-L-Auto-Filter/tree/main/profiles)
 4. Se c'è qualcosa che non torna, contatta sviluppatore
 
 ---
 
 ## D. Gestione delle credenziali (Secrets)
 
-I "Secrets" sono le password che il workflow usa per accedere a Gmail e Telegram. Vanno aggiornati raramente, ma devi sapere come fare.
+I "Secrets" sono le credenziali (password e token) che il workflow usa per autenticarsi con Gmail (per leggere le mail) e con Telegram (per mandare i messaggi tramite il bot).
+
+Non possono stare scritte in chiaro nel codice del repository: il codice è pubblico su GitHub, quindi chiunque visiti il repo potrebbe leggerle e usarle per accedere alla casella Gmail o impersonare il bot Telegram. 
+Per questo GitHub le tiene in una "cassaforte" apposita ("Secrets and variables"): il bot le usa solo nel momento in cui gira, nessuno le può leggere — nemmeno tu. Se serve cambiarle, l'unica cosa che puoi fare è sovrascriverle con un nuovo valore.
+
+Vanno aggiornati raramente (in pratica solo se Gmail revoca l'App Password o se il token Telegram viene rigenerato), ma devi sapere come fare.
 
 **Dove si trovano:**
 https://github.com/philos-l/Philos-L-Auto-Filter/settings/secrets/actions
@@ -149,12 +166,13 @@ Per aggiornarne uno: clicca sul nome del Secret → **Update** → incolla il nu
 
 ### D.1 — `IMAP_PASS` (App Password Gmail)
 
-Va aggiornata se Gmail revoca l'App Password (succede raramente, di solito quando si cambia la password principale dell'account).
+L'**App Password** è una password "usa e getta" che Gmail genera per far accedere alla casella un programma esterno (in questo caso il bot), senza dovergli dare la password vera dell'account.
+Va aggiornata se Gmail la revoca (succede raramente, di solito quando si cambia la password principale dell'account).
 
 Per generarne una nuova:
 1. Accedi all'account Gmail `philos.l.list@gmail.com`
 2. Vai su https://myaccount.google.com/security
-3. Sezione **Verifica in due passaggi** → in fondo trovi **App Password**
+3. Sezione **Verifica in due passaggi** → in fondo trovi **App Password** (oppure cercalo nella barra di ricerca)
 4. Genera una nuova password (16 caratteri)
 5. Copiala e incollala nel Secret `IMAP_PASS` su GitHub
 
@@ -167,11 +185,12 @@ Il bot Telegram è gestito da sviluppatore. Se serve rigenerare il token:
 
 ### D.3 — `IMAP_USER`
 
-Solo se cambia l'indirizzo email Gmail dell'account. Va sostituito con il nuovo indirizzo completo (es. `nuovo@gmail.com`).
+E' la mail dell'account.
+Va sostituita solo se cambia l'indirizzo email Gmail dell'account.
 
 ### D.4 — `IMAP_HOST`
 
-Non cambia mai. È sempre `imap.gmail.com`. Se per qualche motivo va aggiornato, contatta sviluppatore.
+Non cambia mai. È sempre `imap.gmail.com`. 
 
 ---
 
