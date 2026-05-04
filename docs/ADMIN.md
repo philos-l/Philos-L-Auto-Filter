@@ -1,6 +1,6 @@
 # Guida per l'amministratore
 
-Questa guida spiega come gestire il progetto **Philos-L Notification Bot** giorno per giorno. È pensata per chi non ha competenze tecniche: ogni operazione è descritta passo per passo. Se segui le istruzioni alla lettera non puoi sbagliare.
+Questa guida spiega come gestire il progetto **Philos-L Notification Bot** giorno per giorno.
 
 ---
 
@@ -10,21 +10,29 @@ Il bot monitora la mailing list **PHILOS-L** ogni ora circa minuti. Per ogni ute
 
 Tutto gira automaticamente su **GitHub Actions**, un servizio gratuito di GitHub che esegue piccoli programmi a intervalli regolari senza bisogno di tenere acceso un computer. 
 In pratica è come una sveglia che ogni ora controlla la posta e fa partire il bot al posto tuo. 
-Anche che le operazioni di gestione (aggiungere/rimuovere utenti, ecc.) si fanno tutte dalla pagina web del repo, cliccando dei pulsanti — non serve installare niente sul tuo computer.
+Anche che le operazioni di gestione (aggiungere/rimuovere utenti, ecc.) si fanno tutte dalla pagina web del repo, cliccando dei pulsanti.
 
 Il tuo compito è solo:
 
-- aggiungere nuovi utenti quando te lo chiedono
-- modificare/rimuovere utenti su richiesta
-- controllare di tanto in tanto che non ci siano errori
-- aggiornare le credenziali se Gmail o Telegram lo richiedono
+- **Aggiungere nuovi utenti** quando te lo chiedono
+- **Modificare/rimuovere utenti** su richiesta
+- Controllare di tanto in tanto che non ci siano errori
+- Aggiornare le credenziali se Gmail o Telegram lo richiedono
+
+---
+
+## A.1 — Prerequisito: essere loggati
+
+Tutte le operazioni descritte in questa guida (lanciare i workflow, modificare i Secrets, generare l'App Password Gmail) **funzionano solo se sei loggato con gli account giusti**:
+
+- **Account GitHub** dell'organizzazione → serve per la pagina **Actions** e per la sezione **Secrets**. Se apri i link e GitHub ti chiede di accedere, vuol dire che non sei loggato.
+- **Account Google** del bot → serve solo quando devi rigenerare l'App Password (sezione D.1).
 
 ---
 
 ## B. Operazioni quotidiane
 
-Tutte le operazioni si fanno dalla pagina **Actions** del repo:
-https://github.com/philos-l/Philos-L-Auto-Filter/actions
+Tutte le operazioni si fanno dalla pagina [**Actions**](https://github.com/philos-l/Philos-L-Auto-Filter/actions) del repo
 
 ![Pagina Actions evidenziata in blu](/docs/images/image-1.png)
 *Pagina Actions evidenziata in blu*
@@ -38,6 +46,7 @@ Il flusso è sempre lo stesso:
 
 ![Schermata di esecuzione un workflow](/docs/images/image-2.png)
 *Schermata di esecuzione un workflow*
+
 
 ![Schermata di fine esecuzione di un workflow](/docs/images/image-3.png)
 *Schermata di fine esecuzione di un workflow*
@@ -53,7 +62,7 @@ Quando qualcuno ti manda nome, Chat ID e parole chiave:
 2. Clicca **Run workflow** (in alto a destra)
 3. Compila i tre campi:
    - **Nome del profilo**: il nome che ti ha dato (es. `mario`) — solo lettere minuscole, senza spazi
-   - **Chat ID**: il numero che ti ha mandato (es. `684963912`)
+   - **Chat ID**: il numero che ti ha mandato (es. `484946982`)
    - **Parole chiave**: le keyword separate da virgola (es. `phd, postdoc, metaphysics`)
 4. Clicca **Run workflow**
 5. Aspetta che la run finisca (pallino verde ✅)
@@ -102,7 +111,7 @@ Quando serve: se un utente segnala "non ho ricevuto una notifica per una mail ve
    - **Nome del profilo**: lascia vuoto per resettare tutti, oppure scrivi un nome specifico
 4. Clicca **Run workflow**
 
-Alla prossima esecuzione il bot riprocesserà **tutte** le mail dall'inizio (può mandare molte notifiche tutte insieme — avvisa l'utente).
+Alla prossima esecuzione il bot riprocesserà **tutte** le mail dall'inizio (può mandare molte notifiche tutte insieme).
 
 ---
 
@@ -133,8 +142,10 @@ Se vedi pallini rossi recenti, vai al punto C.2.
 ![Esempio di esecuzione fallita](/docs/images/image-5.png)
 *Esempio di esecuzione fallita*
 
+
 ![Singolo job fallito](/docs/images/image-6.png)
 *Singolo job fallito*
+
 
 ![Log di errore del job fallito](/docs/images/image-7.png)
 *Log di errore del job fallito*
@@ -152,17 +163,23 @@ Controlla in ordine:
 
 ## D. Gestione delle credenziali (Secrets)
 
-I "Secrets" sono le credenziali (password e token) che il workflow usa per autenticarsi con Gmail (per leggere le mail) e con Telegram (per mandare i messaggi tramite il bot).
+**I "Secrets" sono le credenziali** (password e token) **che il workflow usa per autenticarsi** con Gmail (per leggere le mail) e con Telegram (per mandare i messaggi tramite il bot).
 
 Non possono stare scritte in chiaro nel codice del repository: il codice è pubblico su GitHub, quindi chiunque visiti il repo potrebbe leggerle e usarle per accedere alla casella Gmail o impersonare il bot Telegram. 
+
 Per questo GitHub le tiene in una "cassaforte" apposita ("Secrets and variables"): il bot le usa solo nel momento in cui gira, nessuno le può leggere — nemmeno tu. Se serve cambiarle, l'unica cosa che puoi fare è sovrascriverle con un nuovo valore.
 
 Vanno aggiornati raramente (in pratica solo se Gmail revoca l'App Password o se il token Telegram viene rigenerato), ma devi sapere come fare.
 
-**Dove si trovano:**
-https://github.com/philos-l/Philos-L-Auto-Filter/settings/secrets/actions
+Si trovano in Settings sotto [**Actions Secrets and Variables**](https://github.com/philos-l/Philos-L-Auto-Filter/settings/secrets/actions)
 
-Per aggiornarne uno: clicca sul nome del Secret → **Update** → incolla il nuovo valore → **Update secret**.
+Per aggiornarne uno: clicca sul simbolo della matita a destra del valore che si vuole modificare → **Update** → incolla il nuovo valore → **Update secret**.
+
+![Schermata dei Secrets](/docs/images/image-8.png)
+*Schermata dei Secrets*
+
+![Modifica Secret](/docs/images/image-9.png)
+*Modifica Secret*
 
 ### D.1 — `IMAP_PASS` (App Password Gmail)
 
@@ -178,8 +195,8 @@ Per generarne una nuova:
 
 ### D.2 — `TELEGRAM_BOT_TOKEN`
 
-Il bot Telegram è gestito da sviluppatore. Se serve rigenerare il token:
-1. Contatta sviluppatore
+Il bot Telegram è gestito dallo sviluppatore. Se serve rigenerare il token:
+1. Contatta lo sviluppatore
 2. Lui ti manda il nuovo token
 3. Tu lo incolli nel Secret `TELEGRAM_BOT_TOKEN` su GitHub
 
@@ -208,10 +225,9 @@ Se qualcosa di tutto questo serve davvero, chiedi a sviluppatore.
 
 ---
 
-## F. Quando contattare sviluppatore
+## F. Quando contattare lo sviluppatore
 
 - Un workflow è fallito (mandagli il log copiato come spiegato in C.2)
 - Va rigenerato il token Telegram
 - Vuoi cambiare qualcosa nel funzionamento del bot
 - Vuoi una nuova feature
-- Qualcosa non capisci o ti spaventa — meglio chiedere che rompere

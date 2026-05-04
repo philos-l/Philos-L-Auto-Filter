@@ -3,7 +3,7 @@
 Philos-L Notification Bot permette di ricevere una notifica Telegram ogni volta che arriva una mail sulla mailing list **PHILOS-L** (mailing list di annunci di filosofia accademica) contenente una parola chiave (ad esempio: "ontology", "metaphysics", "call for papers") o qualsiasi altro termine.
 Serve per essere notificati solo degli argomenti che interessano.
 
-Viene eseguito una volta all'ora circa tramite Github Actions.
+Viene eseguito una volta al giorno tramite Github Actions.
 
 ---
 
@@ -11,7 +11,7 @@ Viene eseguito una volta all'ora circa tramite Github Actions.
 
 ### Passo 1 — Avvia il bot su Telegram
 
-Cerca **@philos_l_notification_bot** su Telegram, o clicca qui: https://t.me/philos_l_notification_bot
+Cerca **@philos_l_notification_bot** su Telegram, o clicca [qui](https://t.me/philos_l_notification_bot)
 
 Premi **Avvia**. Da questo momento il bot ti conosce.
 
