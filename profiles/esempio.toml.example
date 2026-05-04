@@ -14,10 +14,5 @@ keywords = [
 # ── Telegram ────────────────────────────────────────────────────────────────
 # Bot: Philos-L Notification Bot → https://t.me/philos_l_notification_bot
 #
-# Come ottenere il tuo chat_id:
-# 1. Apri il link qui sopra su Telegram e premi "Avvia" (o manda qualsiasi messaggio)
-# 2. Apri questo URL nel browser (chiedi a Giovanni il TOKEN):
-#    https://api.telegram.org/bot<TOKEN>/getUpdates
-# 3. Nella risposta cerca "chat" → "id" — quel numero è il tuo chat_id
-# 4. Se la risposta è vuota {"result":[]}, manda un altro messaggio al bot e riprova
+# Per ottenere il chat_id segui il README
 telegram_chat_id = "IL_TUO_CHAT_ID"

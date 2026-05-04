@@ -21,6 +21,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Mask Chat ID in logs
+        run: echo "::add-mask::${{ inputs.chat_id }}"
+
       - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v6

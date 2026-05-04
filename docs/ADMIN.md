@@ -187,7 +187,7 @@ L'**App Password** è una password "usa e getta" che Gmail genera per far accede
 Va aggiornata se Gmail la revoca (succede raramente, di solito quando si cambia la password principale dell'account).
 
 Per generarne una nuova:
-1. Accedi all'account Gmail `philos.l.list@gmail.com`
+1. Accedi all'account Gmail
 2. Vai su https://myaccount.google.com/security
 3. Sezione **Verifica in due passaggi** → in fondo trovi **App Password** (oppure cercalo nella barra di ricerca)
 4. Genera una nuova password (16 caratteri)
