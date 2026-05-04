@@ -2,7 +2,7 @@ name: PHILOS-L Monitor
 
 on:
   schedule:
-    - cron: '38 * * * *'
+    - cron: '38 7 * * *'
   workflow_dispatch:
 
 permissions:
