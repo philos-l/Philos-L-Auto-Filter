@@ -2,15 +2,17 @@
 
 Questa guida spiega come gestire il progetto **Philos-L Notification Bot** giorno per giorno. È pensata per chi non ha competenze tecniche: ogni operazione è descritta passo per passo. Se segui le istruzioni alla lettera non puoi sbagliare.
 
-Quando serve aiuto: contatta Giovanni.
-
 ---
 
 ## A. Cos'è e come funziona
 
-Il bot monitora la mailing list **PHILOS-L** ogni 15 minuti. Per ogni utente iscritto, controlla se nelle nuove mail compaiono le sue parole chiave; se sì, gli manda una notifica su Telegram.
+Il bot monitora la mailing list **PHILOS-L** ogni ora circa minuti. Per ogni utente iscritto, controlla se nelle nuove mail compaiono le sue parole chiave; se sì, gli manda una notifica su Telegram.
 
-Tutto gira automaticamente su **GitHub Actions** — non serve un computer acceso, non serve fare niente in continuazione. Il tuo compito è solo:
+Tutto gira automaticamente su **GitHub Actions**, un servizio gratuito di GitHub che esegue piccoli programmi a intervalli regolari senza bisogno di tenere acceso un computer. 
+In pratica è come una sveglia che ogni ora controlla la posta e fa partire il bot al posto tuo. 
+Anche che le operazioni di gestione (aggiungere/rimuovere utenti, ecc.) si fanno tutte dalla pagina web del repo, cliccando dei pulsanti — non serve installare niente sul tuo computer.
+
+Il tuo compito è solo:
 
 - aggiungere nuovi utenti quando te lo chiedono
 - modificare/rimuovere utenti su richiesta
@@ -24,6 +26,9 @@ Tutto gira automaticamente su **GitHub Actions** — non serve un computer acces
 Tutte le operazioni si fanno dalla pagina **Actions** del repo:
 https://github.com/philos-l/Philos-L-Auto-Filter/actions
 
+![Pagina Actions evidenziata in blu](/docs/images/image-1.png)
+*Pagina Actions evidenziata in blu*
+
 Il flusso è sempre lo stesso:
 1. Apri il link del workflow giusto (li trovi qui sotto)
 2. Clicca il pulsante **Run workflow** in alto a destra
@@ -31,13 +36,20 @@ Il flusso è sempre lo stesso:
 4. Clicca di nuovo **Run workflow**
 5. Aspetta 30-60 secondi e controlla che il pallino diventi verde ✅
 
+![Schermata di esecuzione un workflow](/docs/images/image-2.png)
+*Schermata di esecuzione un workflow*
+
+![Schermata di fine esecuzione di un workflow](/docs/images/image-3.png)
+*Schermata di fine esecuzione di un workflow*
+
+
 ---
 
 ### B.1 — Aggiungere un utente
 
 Quando qualcuno ti manda nome, Chat ID e parole chiave:
 
-1. Apri: https://github.com/philos-l/Philos-L-Auto-Filter/actions/workflows/add_user.yml
+1. Apri il workflow [Add User](https://github.com/philos-l/Philos-L-Auto-Filter/actions/workflows/add_user.yml)
 2. Clicca **Run workflow** (in alto a destra)
 3. Compila i tre campi:
    - **Nome del profilo**: il nome che ti ha dato (es. `mario`) — solo lettere minuscole, senza spazi
@@ -46,7 +58,7 @@ Quando qualcuno ti manda nome, Chat ID e parole chiave:
 4. Clicca **Run workflow**
 5. Aspetta che la run finisca (pallino verde ✅)
 
-Da quel momento l'utente riceverà notifiche alla prossima esecuzione (entro 15 minuti).
+Da quel momento l'utente riceverà notifiche alla prossima esecuzione.
 
 ---
 
@@ -54,7 +66,7 @@ Da quel momento l'utente riceverà notifiche alla prossima esecuzione (entro 15 
 
 Quando un utente vuole cambiare le sue parole chiave:
 
-1. Apri: https://github.com/philos-l/Philos-L-Auto-Filter/actions/workflows/modify_user.yml
+1. Apri il workflow [Modify User](https://github.com/philos-l/Philos-L-Auto-Filter/actions/workflows/modify_user.yml)
 2. Clicca **Run workflow**
 3. Compila:
    - **Nome del profilo**: il suo nome (es. `mario`)
@@ -63,13 +75,15 @@ Quando un utente vuole cambiare le sue parole chiave:
 
 Il Chat ID resta invariato, cambiano solo le keyword.
 
+> **Nota bene:** solo le **nuove** mail che contengono le nuove keyword vengono processate. Se si vuole riprocessare anche le vecchie mail con la nuova keyword, conviene eliminare il profilo e ricrearlo con lo stesso nome e Chat ID.
+
 ---
 
 ### B.3 — Rimuovere un utente
 
 Quando qualcuno vuole disiscriversi:
 
-1. Apri: https://github.com/philos-l/Philos-L-Auto-Filter/actions/workflows/remove_user.yml
+1. Apri il workflow [Remove User](https://github.com/philos-l/Philos-L-Auto-Filter/actions/workflows/remove_user.yml)
 2. Clicca **Run workflow**
 3. Scrivi il **Nome del profilo** da rimuovere
 4. Clicca **Run workflow**
@@ -82,7 +96,7 @@ Profilo e storico vengono eliminati.
 
 Quando serve: se un utente segnala "non ho ricevuto una notifica per una mail vecchia che doveva farmi match" — succede ad esempio se ha aggiunto delle keyword nuove e vuole che il bot riguardi le mail già processate.
 
-1. Apri: https://github.com/philos-l/Philos-L-Auto-Filter/actions/workflows/reset_state.yml
+1. Apri il workflow [Reset State](https://github.com/philos-l/Philos-L-Auto-Filter/actions/workflows/reset_state.yml)
 2. Clicca **Run workflow**
 3. Compila:
    - **Nome del profilo**: lascia vuoto per resettare tutti, oppure scrivi un nome specifico
@@ -96,7 +110,7 @@ Alla prossima esecuzione il bot riprocesserà **tutte** le mail dall'inizio (pu�
 
 ### C.1 — Controllo periodico
 
-Apri ogni tanto: https://github.com/philos-l/Philos-L-Auto-Filter/actions
+Per fare un controllo della corretta esecuzione apri la pagina [Actions](https://github.com/philos-l/Philos-L-Auto-Filter/actions)
 
 Vedrai una lista di run con dei pallini:
 - ✅ **Verde** = tutto bene
@@ -111,9 +125,7 @@ Se vedi pallini rossi recenti, vai al punto C.2.
 3. Scorri i passaggi (steps) — quello fallito ha la X rossa
 4. Clicca sul passaggio rosso per espanderlo
 5. Copia tutto il testo dell'errore
-6. Manda a Giovanni il messaggio + il link della run
-
-**Non provare a sistemare nulla da solo** — anche se sembra ovvio, può essere più complicato di quel che sembra.
+6. Manda allo sviluppatore il messaggio + il link della run
 
 ### C.3 — Un utente segnala "non ricevo notifiche"
 
@@ -122,7 +134,7 @@ Controlla in ordine:
 1. Vai su **Actions** e verifica che le ultime run siano verdi
 2. Se sono tutte verdi: probabilmente nessuna mail ha matchato le sue keyword. Chiedigli quanto aspetta (su PHILOS-L per certe keyword possono passare giorni)
 3. Verifica che il suo profilo esista: https://github.com/philos-l/Philos-L-Auto-Filter/tree/main/profiles
-4. Se c'è qualcosa che non torna, contatta Giovanni
+4. Se c'è qualcosa che non torna, contatta sviluppatore
 
 ---
 
@@ -148,8 +160,8 @@ Per generarne una nuova:
 
 ### D.2 — `TELEGRAM_BOT_TOKEN`
 
-Il bot Telegram è gestito da Giovanni. Se serve rigenerare il token:
-1. Contatta Giovanni
+Il bot Telegram è gestito da sviluppatore. Se serve rigenerare il token:
+1. Contatta sviluppatore
 2. Lui ti manda il nuovo token
 3. Tu lo incolli nel Secret `TELEGRAM_BOT_TOKEN` su GitHub
 
@@ -159,7 +171,7 @@ Solo se cambia l'indirizzo email Gmail dell'account. Va sostituito con il nuovo 
 
 ### D.4 — `IMAP_HOST`
 
-Non cambia mai. È sempre `imap.gmail.com`. Se per qualche motivo va aggiornato, contatta Giovanni.
+Non cambia mai. È sempre `imap.gmail.com`. Se per qualche motivo va aggiornato, contatta sviluppatore.
 
 ---
 
@@ -173,11 +185,11 @@ Per evitare di rompere qualcosa:
 - ❌ **Non modificare il codice Python** (`mail_monitor_multi.py`) né i file YAML dei workflow.
 - ❌ **Non condividere i Secrets** con nessuno (sono come password).
 
-Se qualcosa di tutto questo serve davvero, chiedi a Giovanni.
+Se qualcosa di tutto questo serve davvero, chiedi a sviluppatore.
 
 ---
 
-## F. Quando contattare Giovanni
+## F. Quando contattare sviluppatore
 
 - Un workflow è fallito (mandagli il log copiato come spiegato in C.2)
 - Va rigenerato il token Telegram

@@ -1,7 +1,9 @@
 # Philos-L Notification Bot
 
-Philos-L Notification Bot è uno script che viene eseguito ogni 15 minuti tramite Github Actions.
-Permette di ricevere una notifica Telegram ogni volta che arriva una mail sulla mailing list **PHILOS-L** (la principale lista di filosofia accademica) contenente una parola chiave (ad esempio: "ontology", "metaphysics", "call for papers") o qualsiasi altro termine.
+Philos-L Notification Bot permette di ricevere una notifica Telegram ogni volta che arriva una mail sulla mailing list **PHILOS-L** (mailing list di annunci di filosofia accademica) contenente una parola chiave (ad esempio: "ontology", "metaphysics", "call for papers") o qualsiasi altro termine.
+Serve per essere notificati solo degli argomenti che interessano.
+
+Viene eseguito una volta all'ora circa tramite Github Actions.
 
 ---
 
@@ -17,9 +19,9 @@ Premi **Avvia**. Da questo momento il bot ti conosce.
 
 ### Passo 2 — Trova il tuo Chat ID
 
-Il Chat ID è un numeretto che dice al bot dove mandarti i messaggi. Ce ne sono due modi per trovarlo — usane uno qualsiasi:
+Il Chat ID è un numeretto che dice al bot dove mandarti i messaggi. Ce ne sono due modi per trovarlo — il primo è più semplice:
 
-#### Metodo A — @WhatChatIDBot (il più veloce)
+#### Metodo A — @WhatChatIDBot
 
 1. Cerca **@WhatChatIDBot** su Telegram
 2. Premi **Avvia**
@@ -63,9 +65,9 @@ Puoi aggiungerne quante vuoi, anche frasi di più parole.
 
 <!-- AMMINISTRATORE: inserisci qui i tuoi contatti (es. email, Telegram) -->
 
-Manda all'amministratore (Telegram o email) queste tre cose:
+Manda all'amministratore queste tre cose:
 
-1. **Il tuo nome** (o un soprannome va benissimo)
+1. **Il tuo nome** (diventerà il nome del profilo)
 2. **Il tuo Chat ID** (il numero del Passo 2)
 3. **Le tue parole chiave**
 
@@ -75,12 +77,7 @@ Lui aggiunge il tuo profilo e da quel momento le notifiche partono in automatico
 
 ## Come disiscriversi
 
-1. Vai su https://github.com/philos-l/Philos-L-Auto-Filter/actions/workflows/remove_user.yml
-2. Clicca il pulsante **Run workflow** (in alto a destra)
-3. Scrivi il tuo nome nel campo che appare
-4. Clicca di nuovo **Run workflow**
-
-Fatto — profilo e notifiche rimossi in automatico.
+Scrivi all'amministratore chiedendo la rimozione del tuo profilo. Lui lo elimina e da quel momento non riceverai più notifiche.
 
 ---
 
