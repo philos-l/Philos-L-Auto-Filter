@@ -11,7 +11,7 @@ Viene eseguito una volta al giorno tramite Github Actions.
 
 ### Passo 1 — Avvia il bot su Telegram
 
-Cerca **@philos_l_notification_bot** su Telegram, o clicca [qui](https://t.me/philos_l_notification_bot)
+Cerca [**@philos_l_notification_bot**](https://t.me/philos_l_notification_bot) su Telegram,
 
 Premi **Avvia**. Da questo momento il bot ti conosce.
 
@@ -23,14 +23,14 @@ Il Chat ID è un numeretto che dice al bot dove mandarti i messaggi. Ce ne sono 
 
 #### Metodo A — @WhatChatIDBot
 
-1. Cerca **@WhatChatIDBot** su Telegram
+1. Cerca [**@WhatChatIDBot**](https://t.me/WhatChatIDBot) su Telegram
 2. Premi **Avvia**
 3. Il bot ti risponde subito con il tuo Chat ID, tipo `484946982`
 4. Copialo
 
 #### Metodo B — Telegram Web
 
-1. Apri **https://web.telegram.org** nel browser
+1. Apri [**https://web.telegram.org**](https://web.telegram.org) nel browser
 2. Entra con il tuo account Telegram
 3. Clicca su **Messaggi Salvati**
 4. Guarda l'URL nella barra del browser — il numero dopo il `#` è il tuo Chat ID
