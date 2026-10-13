@@ -71,6 +71,8 @@ ARCHIVE_LINK_RE   = re.compile(
     r'[^>]*>\s*([^<]+?)\s*</a>',
     re.IGNORECASE,
 )
+# Operatori delle espressioni di keyword: valgono solo in maiuscolo
+OPERATOR_RE       = re.compile(r"(\(|\)|\bAND\b|\bOR\b|\bNOT\b)")
 
 
 def normalize_subject(subject):
@@ -200,9 +202,107 @@ def keyword_regex(keyword):
     return re.compile(rf"(?<!\w){words}(?!\w)", re.IGNORECASE)
 
 
+@functools.lru_cache(maxsize=None)
+def parse_keyword(entry):
+    """
+    Trasforma una voce di `keywords` in un albero. Una voce è una parola o
+    frase semplice, oppure un'espressione con AND, OR, NOT (solo in maiuscolo)
+    e parentesi: tutto ciò che sta tra due operatori è una frase. Esempio:
+        (phd OR doctoral position) AND (metaphysics OR logic) AND NOT conference
+    Nodi: ("kw", frase), ("not", nodo), ("and", [nodi]), ("or", [nodi]).
+    Solleva ValueError se l'espressione è malformata.
+    """
+    tokens = [t.strip() for t in OPERATOR_RE.split(entry)]
+    tokens = [t for t in tokens if t]
+    pos = 0
+
+    def peek():
+        return tokens[pos] if pos < len(tokens) else None
+
+    def parse_chain(operator, parse_operand):
+        nonlocal pos
+        nodes = [parse_operand()]
+        while peek() == operator:
+            pos += 1
+            nodes.append(parse_operand())
+        return nodes[0] if len(nodes) == 1 else (operator.lower(), nodes)
+
+    def parse_or():
+        return parse_chain("OR", parse_and)
+
+    def parse_and():
+        return parse_chain("AND", parse_not)
+
+    def parse_not():
+        nonlocal pos
+        tok = peek()
+        if tok is None:
+            raise ValueError("manca una keyword alla fine")
+        if tok in (")", "AND", "OR"):
+            raise ValueError(f"manca una keyword prima di '{tok}'")
+        pos += 1
+        if tok == "NOT":
+            return ("not", parse_not())
+        if tok == "(":
+            node = parse_or()
+            if peek() != ")":
+                raise ValueError("parentesi non chiusa")
+            pos += 1
+            return node
+        return ("kw", tok)
+
+    if not tokens:
+        raise ValueError("keyword vuota")
+    tree = parse_or()
+    if peek() == ")":
+        raise ValueError("parentesi chiusa senza la corrispondente aperta")
+    if peek() is not None:
+        raise ValueError(f"manca AND oppure OR prima di '{peek()}'")
+    return tree
+
+
+def evaluate(node, text):
+    """Valuta l'albero sul testo. Ritorna (esito, keyword trovate)."""
+    kind = node[0]
+    if kind == "kw":
+        hit = keyword_regex(node[1]).search(text) is not None
+        return hit, [node[1]] if hit else []
+    if kind == "not":
+        hit, _ = evaluate(node[1], text)
+        return not hit, []
+    results = [evaluate(child, text) for child in node[1]]
+    hits    = [hit for hit, _ in results]
+    ok      = all(hits) if kind == "and" else any(hits)
+    return ok, [kw for _, found in results for kw in found] if ok else []
+
+
+def check_keywords(profile):
+    """Ritorna la lista degli errori di sintassi nelle keyword del profilo."""
+    problems = []
+    for entry in profile.get("keywords", []):
+        if not isinstance(entry, str):
+            problems.append(f"keyword {entry!r}: deve essere un testo tra virgolette")
+            continue
+        try:
+            parse_keyword(entry)
+        except ValueError as e:
+            problems.append(f"keyword '{entry}': {e}")
+    return problems
+
+
 def matches(subject, body, keywords):
-    text = subject + " " + body
-    return [kw for kw in keywords if kw.strip() and keyword_regex(kw).search(text)]
+    """
+    Ritorna le keyword trovate nella mail; lista vuota se nessuna voce di
+    `keywords` è soddisfatta. Le voci sono in OR tra loro.
+    """
+    text  = subject + " " + body
+    found = []
+    for entry in keywords:
+        ok, kws = evaluate(parse_keyword(entry), text)
+        if ok:
+            # Un'espressione fatta solo di NOT non ha keyword trovate da mostrare
+            found.extend(kws or [entry])
+    return list(dict.fromkeys(found))
 
 
 def send_telegram(token, chat_id, text):
@@ -225,7 +325,7 @@ def send_telegram(token, chat_id, text):
 
 
 def format_message(subject, sender, date_str, body, matched_kw, archive_link=""):
-    kw_list  = ", ".join(f"<code>{k}</code>" for k in matched_kw)
+    kw_list  = ", ".join(f"<code>{html.escape(k)}</code>" for k in matched_kw)
     date_str = f"\n📅 {html.escape(date_str)}" if date_str else ""
     link_str = f"\n🔗 <a href=\"{archive_link}\">Leggi l'annuncio</a>" if archive_link else ""
     return (
@@ -293,7 +393,9 @@ def main():
                         help="Stampa i match senza mandare Telegram")
     parser.add_argument("--reset", action="store_true",
                         help="Azzera lo storico (tutti i profili o solo --profile)")
-    parser.add_argument("--profile", metavar="NAME",
+    parser.add_argument("--check", action="store_true",
+                        help="Controlla la sintassi delle keyword ed esce")
+    parser.add_argument("--profile", metavar="NAME", type=str.strip,
                         help="Limita l'esecuzione (o il reset) a un singolo profilo")
     args = parser.parse_args()
 
@@ -310,6 +412,25 @@ def main():
             save_state(p["name"], 0)
             print(f"Storico azzerato: {p['name']}")
         return
+
+    # Un profilo con keyword non valide viene saltato: gli altri proseguono
+    errors = 0
+    valid  = []
+    for p in profiles:
+        problems = check_keywords(p)
+        for problem in problems:
+            print(f"ERRORE profilo '{p['name']}': {problem}", file=sys.stderr)
+        if problems:
+            errors += 1
+        else:
+            valid.append(p)
+    profiles = valid
+
+    if args.check:
+        print(f"Profili con keyword valide: {len(profiles)}, con errori: {errors}")
+        sys.exit(1 if errors else 0)
+    if not profiles:
+        sys.exit(1)
 
     # --- Connessione IMAP ---
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Connessione a {IMAP_HOST}...")
@@ -371,7 +492,6 @@ def main():
         key = normalize_subject(m["subject"])
         m["archive_link"] = archive_links.get(key, "")
 
-    errors = 0
     for p in profiles:
         print(f"\n── Profilo: {p['name']} ──")
         notified, failed, last_uid = process_profile(

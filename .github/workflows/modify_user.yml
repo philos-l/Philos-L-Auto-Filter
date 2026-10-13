@@ -7,7 +7,7 @@ on:
         description: 'Nome del profilo da modificare (es. mario)'
         required: true
       keywords:
-        description: 'Nuove parole chiave separate da virgola (sostituiscono le vecchie)'
+        description: 'Nuove parole chiave separate da virgola (sostituiscono le vecchie). Combinazioni con AND, OR, NOT e parentesi: (phd OR postdoc) AND logic'
         required: true
 
 permissions:
@@ -51,6 +51,11 @@ jobs:
               f.writelines(lines)
           print(f"Updated {path} with {len(keywords)} keywords")
           PYEOF
+
+      - name: Check keywords
+        env:
+          PROFILE: ${{ github.event.inputs.name }}
+        run: python3 mail_monitor_multi.py --check --profile "$PROFILE"
 
       - name: Commit and push
         run: |
