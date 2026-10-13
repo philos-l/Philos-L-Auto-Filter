@@ -217,6 +217,59 @@ def format_message(subject, sender, date_str, body, matched_kw, archive_link="")
     )
 
 
+def process_profile(p, all_uids, parsed, seen, dry_run=False):
+    """
+    Cerca le keyword del profilo nelle mail non ancora viste e manda le notifiche.
+    Aggiorna `seen` sul posto e ritorna (notificate, fallite). Una mail la cui
+    notifica fallisce non viene segnata come vista, così viene ritentata.
+    """
+    keywords = p.get("keywords", [])
+    tg_chat  = p.get("telegram_chat_id", "")
+    notified = 0
+    failed   = 0
+
+    for uid_bytes in all_uids:
+        uid = uid_bytes.decode()
+        if uid in seen:
+            continue
+        if uid not in parsed:
+            seen.add(uid)
+            continue
+
+        m = parsed[uid]
+        matched_kw = matches(m["subject"], m["body"], keywords)
+        if not matched_kw:
+            seen.add(uid)
+            continue
+
+        print(f"  MATCH [{', '.join(matched_kw)}]: {m['subject']}")
+
+        if not dry_run:
+            try:
+                send_telegram(
+                    TELEGRAM_BOT_TOKEN, tg_chat,
+                    format_message(m["subject"], m["sender"],
+                                   m["date"], m["body"], matched_kw,
+                                   m.get("archive_link", "")),
+                )
+                print("  Notifica inviata.")
+            except Exception as e:
+                print(f"  ERRORE Telegram: {e}", file=sys.stderr)
+                failed += 1
+                continue
+        else:
+            print(f"  [dry-run] Messaggio:\n")
+            print(format_message(m["subject"], m["sender"],
+                                 m["date"], m["body"], matched_kw,
+                                 m.get("archive_link", "")))
+            print()
+
+        seen.add(uid)
+        notified += 1
+
+    return notified, failed
+
+
 def main():
     parser = argparse.ArgumentParser(description="Mail Keyword Monitor multi-profilo")
     parser.add_argument("--dry-run", action="store_true",
@@ -309,55 +362,21 @@ def main():
         key = normalize_subject(m["subject"])
         m["archive_link"] = archive_links.get(key, "")
 
+    errors = 0
     for p in profiles:
         print(f"\n── Profilo: {p['name']} ──")
-        seen     = all_seen[p["name"]]
-        keywords = p.get("keywords", [])
-        tg_chat  = p.get("telegram_chat_id", "")
-        notified = 0
-
-        for uid_bytes in all_uids:
-            uid = uid_bytes.decode()
-            if uid in seen:
-                continue
-            if uid not in parsed:
-                seen.add(uid)
-                continue
-
-            m = parsed[uid]
-            matched_kw = matches(m["subject"], m["body"], keywords)
-            if not matched_kw:
-                seen.add(uid)
-                continue
-
-            print(f"  MATCH [{', '.join(matched_kw)}]: {m['subject']}")
-
-            if not args.dry_run:
-                if TELEGRAM_BOT_TOKEN == "IL_TUO_BOT_TOKEN":
-                    print("  Telegram non configurato (imposta TELEGRAM_BOT_TOKEN).")
-                else:
-                    try:
-                        send_telegram(
-                            TELEGRAM_BOT_TOKEN, tg_chat,
-                            format_message(m["subject"], m["sender"],
-                                           m["date"], m["body"], matched_kw,
-                                           m.get("archive_link", "")),
-                        )
-                        print("  Notifica inviata.")
-                    except Exception as e:
-                        print(f"  ERRORE Telegram: {e}", file=sys.stderr)
-            else:
-                print(f"  [dry-run] Messaggio:\n")
-                print(format_message(m["subject"], m["sender"],
-                                     m["date"], m["body"], matched_kw,
-                                     m.get("archive_link", "")))
-                print()
-
-            seen.add(uid)
-            notified += 1
+        seen = all_seen[p["name"]]
+        notified, failed = process_profile(p, all_uids, parsed, seen, args.dry_run)
+        errors += failed
 
         save_state(p["name"], {"seen_uids": list(seen)[-5000:]})
         print(f"  Notificati: {notified}")
+        if failed:
+            print(f"  Notifiche fallite (ritentate al prossimo run): {failed}")
+
+    # Esce con errore così il run risulta fallito e l'amministratore se ne accorge
+    if errors:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
