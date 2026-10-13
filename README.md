@@ -41,7 +41,7 @@ Il Chat ID è un numeretto che dice al bot dove mandarti i messaggi. Ce ne sono 
 
 Quali argomenti ti interessano? Il bot cerca quelle parole in tutte le mail — titolo e testo completo — senza distinguere maiuscole e minuscole.
 
-Ogni parola chiave viene cercata **come parola intera**: `logic` trova "Logic" ma non "phenomenological". Vale anche per i plurali: `position` non trova "positions", quindi se ti servono entrambi scrivili tutti e due.
+Ogni parola chiave viene cercata **all'inizio delle parole**: `position` trova "position" e "positions", `logic` trova "logic" e "logical" ma non "phenomenological". Per questo conviene evitare parole chiave molto corte: `art` troverebbe anche "article".
 
 Qualche idea:
 

@@ -200,11 +200,12 @@ def clean_body(text):
 @functools.lru_cache(maxsize=None)
 def keyword_regex(keyword):
     """
-    Regex che trova la keyword solo come parola (o frase) intera, senza
-    distinguere maiuscole e minuscole: "logic" non scatta su "phenomenological".
+    Regex che trova la keyword solo all'inizio di una parola, senza
+    distinguere maiuscole e minuscole: "logic" trova "logical" e "position"
+    trova "positions", ma "logic" non scatta su "phenomenological".
     """
     words = r"\s+".join(re.escape(w) for w in keyword.split())
-    return re.compile(rf"(?<!\w){words}(?!\w)", re.IGNORECASE)
+    return re.compile(rf"(?<!\w){words}", re.IGNORECASE)
 
 
 @functools.lru_cache(maxsize=None)

@@ -6,7 +6,8 @@
 # ╚══════════════════════════════════════════════════════════════════════╝
 
 # Parole chiave da cercare nelle email (non fa differenza maiuscole/minuscole).
-# Vengono cercate come parole intere: "logic" non trova "phenomenological".
+# Vengono cercate all'inizio delle parole: "position" trova anche "positions",
+# ma "logic" non trova "phenomenological".
 # Basta che la mail ne contenga una. Per combinarle usa AND, OR, NOT (in
 # maiuscolo) e le parentesi, ad esempio:
 #     "(phd OR fellowship) AND (metaphysics OR logic)",

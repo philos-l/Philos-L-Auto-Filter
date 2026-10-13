@@ -24,18 +24,22 @@ def found(text, *keywords):
 
 class KeywordMatchTest(unittest.TestCase):
 
-    def test_parola_intera(self):
+    def test_non_trova_dentro_una_parola(self):
         self.assertEqual(found("Phenomenological proposition", "logic", "position"), [])
         self.assertEqual(found("A position in logic", "logic", "position"),
                          ["logic", "position"])
 
-    def test_plurale_non_incluso(self):
-        self.assertEqual(found("Two PhD positions", "position"), [])
-        self.assertEqual(found("Two PhD positions", "position", "positions"), ["positions"])
+    def test_trova_a_inizio_parola(self):
+        self.assertEqual(found("Two PhD positions", "position"), ["position"])
+        self.assertEqual(found("Kantian and logical themes", "kant", "logic"),
+                         ["kant", "logic"])
+        self.assertEqual(found("Two doctoral positions", "doctoral position"),
+                         ["doctoral position"])
 
     def test_keyword_corta(self):
-        self.assertEqual(found("Aims and scope", "AI"), [])
+        self.assertEqual(found("The main claim", "AI"), [])
         self.assertEqual(found("Philosophy of AI.", "ai"), ["ai"])
+        self.assertEqual(found("Aims and scope", "AI"), ["AI"])
 
     def test_maiuscole_e_punteggiatura(self):
         self.assertEqual(found("KANT's non-logical ethics", "kant", "logical"),
