@@ -9,7 +9,9 @@ Uso:
     python3 mail_monitor_multi.py                        # esecuzione normale
     python3 mail_monitor_multi.py --dry-run              # stampa i match senza mandare Telegram né salvare lo stato
     python3 mail_monitor_multi.py --check                # controlla la sintassi delle keyword ed esce
-    python3 mail_monitor_multi.py --welcome --profile foo  # manda il benvenuto al profilo "foo"
+    python3 mail_monitor_multi.py --notify welcome --profile foo
+                                                         # manda un avviso di servizio al profilo "foo":
+                                                         # welcome, modified, reset oppure removed
     python3 mail_monitor_multi.py --reset                # azzera tutti gli storici
     python3 mail_monitor_multi.py --reset --profile foo  # azzera solo il profilo "foo"
 
@@ -343,29 +345,58 @@ def format_message(subject, sender, date_str, body, matched_kw, archive_link="")
     )
 
 
-def format_welcome(keywords):
-    kw_list = "\n".join(f"• <code>{html.escape(k)}</code>" for k in keywords)
-    return (
-        f"👋 <b>Ciao, qui PHILOS-L Monitor!</b>\n\n"
-        f"Leggo per te la mailing list PHILOS-L e ti scrivo solo quando "
-        f"arriva un annuncio che ti interessa, così non devi scorrerla tutta.\n\n"
-        f"Da adesso ti avviso per ogni nuova mail che corrisponde a:\n{kw_list}\n\n"
-        f"Per cambiare le parole chiave o disiscriverti, scrivi all'amministratore."
-    )
+def format_notice(kind, keywords):
+    """
+    Testo degli avvisi di servizio mandati all'utente quando l'amministratore
+    crea ("welcome"), modifica ("modified"), resetta ("reset") o rimuove
+    ("removed") il suo profilo.
+    """
+    kw_list = "\n".join(f"• <code>{html.escape(str(k))}</code>" for k in keywords)
+    if kind == "welcome":
+        return (
+            f"👋 <b>Ciao, sono PHILOS-L Monitor!</b>\n\n"
+            f"Leggo per te la mailing list PHILOS-L e ti scrivo solo quando "
+            f"arriva un annuncio che ti interessa, così non devi scorrerla tutta.\n\n"
+            f"Da adesso ti avviso per ogni nuova mail che corrisponde a:\n{kw_list}\n\n"
+            f"Per cambiare le parole chiave o disiscriverti, scrivi all'amministratore."
+        )
+    if kind == "modified":
+        return (
+            f"✏️ <b>Parole chiave aggiornate</b>\n\n"
+            f"Ho aggiornato il tuo profilo su PHILOS-L Monitor. Da adesso ti "
+            f"avviso per ogni nuova mail che corrisponde a:\n{kw_list}\n\n"
+            f"Se qualcosa non torna, scrivi all'amministratore."
+        )
+    if kind == "reset":
+        return (
+            f"🔄 <b>Profilo resettato</b>\n\n"
+            f"Il tuo profilo su PHILOS-L Monitor è stato resettato: alla prossima "
+            f"esecuzione ricontrollo dall'inizio tutte le mail della lista, quindi "
+            f"potresti ricevere parecchie notifiche tutte insieme.\n\n"
+            f"Le tue parole chiave sono:\n{kw_list}"
+        )
+    if kind == "removed":
+        return (
+            f"👋 <b>Profilo rimosso</b>\n\n"
+            f"Il tuo profilo su PHILOS-L Monitor è stato rimosso: da adesso non "
+            f"riceverai più notifiche.\n\n"
+            f"Se cambi idea, scrivi all'amministratore. A presto!"
+        )
+    raise ValueError(f"avviso sconosciuto: {kind}")
 
 
-def welcome_profile(p, dry_run=False):
+def send_notice(p, kind, dry_run=False):
     """
-    Manda il messaggio di benvenuto a un profilo nuovo. Ritorna False se
-    l'invio fallisce (es. Chat ID sbagliato o bot mai avviato dall'utente).
+    Manda al profilo un avviso di servizio (vedi format_notice). Ritorna False
+    se l'invio fallisce (es. Chat ID sbagliato o bot mai avviato dall'utente).
     """
-    text = format_welcome(p.get("keywords", []))
+    text = format_notice(kind, p.get("keywords", []))
     if dry_run:
         print(f"  [dry-run] Messaggio:\n\n{text}\n")
         return True
     try:
         send_telegram(TELEGRAM_BOT_TOKEN, p.get("telegram_chat_id", ""), text)
-        print("  Benvenuto inviato.")
+        print("  Avviso inviato.")
         return True
     except Exception as e:
         print(f"  ERRORE Telegram: {e}", file=sys.stderr)
@@ -461,16 +492,16 @@ def main():
                         help="Azzera lo storico (tutti i profili o solo --profile)")
     parser.add_argument("--check", action="store_true",
                         help="Controlla la sintassi delle keyword ed esce")
-    parser.add_argument("--welcome", action="store_true",
-                        help="Manda il benvenuto al profilo --profile e, se è nuovo, "
-                             "lo fa partire dalle mail future")
+    parser.add_argument("--notify", choices=["welcome", "modified", "reset", "removed"],
+                        help="Manda un avviso di servizio ai profili ed esce; "
+                             "'welcome' fa anche partire un profilo nuovo dalle mail future")
     parser.add_argument("--profile", metavar="NAME", type=str.strip,
                         help="Limita l'esecuzione (o il reset) a un singolo profilo")
     args = parser.parse_args()
     if args.profile is not None and not args.profile:
         parser.error("--profile non può essere vuoto")
-    if args.welcome and not args.profile:
-        parser.error("--welcome richiede --profile")
+    if args.notify == "welcome" and not args.profile:
+        parser.error("--notify welcome richiede --profile")
 
     profiles = load_profiles()
 
@@ -484,6 +515,27 @@ def main():
         for p in profiles:
             save_state(p["name"], 0)
             print(f"Storico azzerato: {p['name']}")
+        return
+
+    if args.notify:
+        failed = 0
+        for p in profiles:
+            print(f"── Profilo: {p['name']} ──")
+            # Un profilo senza stato è nuovo: parte dall'ultima mail in casella
+            newest = None
+            if args.notify == "welcome" and load_state(p["name"]) is None:
+                imap, all_uids = open_mailbox()
+                imap.logout()
+                newest = all_uids[-1] if all_uids else 0
+            if not send_notice(p, args.notify, args.dry_run):
+                failed += 1
+            elif newest is not None and not args.dry_run:
+                save_state(p["name"], newest)
+        # Solo il benvenuto è bloccante, perché verifica il Chat ID. Gli altri
+        # avvisi non devono impedire l'operazione dell'amministratore (es.
+        # rimuovere un utente che ha bloccato il bot)
+        if failed and args.notify == "welcome":
+            sys.exit(1)
         return
 
     # Un profilo con keyword non valide viene saltato: gli altri proseguono
@@ -504,20 +556,6 @@ def main():
         sys.exit(1 if errors else 0)
     if not profiles:
         sys.exit(1)
-
-    if args.welcome:
-        p = profiles[0]
-        # Un profilo senza stato è nuovo: parte dall'ultima mail in casella
-        newest = None
-        if load_state(p["name"]) is None:
-            imap, all_uids = open_mailbox()
-            imap.logout()
-            newest = all_uids[-1] if all_uids else 0
-        if not welcome_profile(p, args.dry_run):
-            sys.exit(1)
-        if newest is not None and not args.dry_run:
-            save_state(p["name"], newest)
-        return
 
     imap, all_uids = open_mailbox()
 
@@ -570,7 +608,7 @@ def main():
         print(f"\n── Profilo: {p['name']} ──")
         if p["name"] in new_profiles:
             print("  Profilo nuovo: riceverà solo le mail in arrivo da ora in poi.")
-            if not welcome_profile(p, args.dry_run):
+            if not send_notice(p, "welcome", args.dry_run):
                 # Senza stato salvato resta "nuovo" e il benvenuto viene ritentato
                 errors += 1
                 continue

@@ -221,7 +221,7 @@ class MainTest(unittest.TestCase):
 
     def test_welcome_profilo_nuovo(self):
         self.add_profile("nuovo", ["logic", "(phd OR postdoc) AND kant"])
-        self.assertEqual(self.run_main("--welcome", "--profile", "nuovo"), 0)
+        self.assertEqual(self.run_main("--notify", "welcome", "--profile", "nuovo"), 0)
         self.assertEqual(self.imap.fetched, [])
         self.assertEqual(len(self.sent_texts()), 1)
         self.assertIn("(phd OR postdoc) AND kant", self.sent_texts()[0])
@@ -234,18 +234,46 @@ class MainTest(unittest.TestCase):
     def test_welcome_fallito_non_salva_lo_stato(self):
         self.add_profile("nuovo", ["logic"])
         self.send.side_effect = Exception("400 Bad Request: chat not found")
-        self.assertEqual(self.run_main("--welcome", "--profile", "nuovo"), 1)
+        self.assertEqual(self.run_main("--notify", "welcome", "--profile", "nuovo"), 1)
         self.assertIsNone(self.state("nuovo"))
 
     def test_welcome_profilo_esistente_non_tocca_lo_stato(self):
         self.add_profile("anna", ["logic"], state={"last_uid": 1})
-        self.assertEqual(self.run_main("--welcome", "--profile", "anna"), 0)
+        self.assertEqual(self.run_main("--notify", "welcome", "--profile", "anna"), 0)
         self.assertEqual(len(self.sent_texts()), 1)
         self.assertEqual(self.state("anna"), {"last_uid": 1})
 
     def test_welcome_richiede_profile(self):
         self.add_profile("anna", ["logic"])
-        self.assertEqual(self.run_main("--welcome"), 2)
+        self.assertEqual(self.run_main("--notify", "welcome"), 2)
+
+    def test_avviso_modifica(self):
+        self.add_profile("anna", ["logic", "kant"], state={"last_uid": 1})
+        self.assertEqual(self.run_main("--notify", "modified", "--profile", "anna"), 0)
+        self.assertIn("Parole chiave aggiornate", self.sent_texts()[0])
+        self.assertIn("kant", self.sent_texts()[0])
+        self.assertEqual(self.state("anna"), {"last_uid": 1})
+
+    def test_avviso_reset_a_tutti_i_profili(self):
+        self.add_profile("anna", ["logic"], state={"last_uid": 0})
+        self.add_profile("bruno", ["ethics"], state={"last_uid": 0})
+        self.assertEqual(self.run_main("--notify", "reset"), 0)
+        self.assertEqual(len(self.sent_texts()), 2)
+        self.assertIn("Profilo resettato", self.sent_texts()[0])
+        self.assertIn("ethics", self.sent_texts()[1])
+
+    def test_avviso_rimozione_anche_con_keyword_non_valide(self):
+        self.add_profile("anna", ["(logic OR"], state={"last_uid": 1})
+        self.assertEqual(self.run_main("--notify", "removed", "--profile", "anna"), 0)
+        self.assertIn("Profilo rimosso", self.sent_texts()[0])
+
+    def test_avviso_fallito_non_blocca_l_operazione(self):
+        self.add_profile("anna", ["logic"], state={"last_uid": 1})
+        self.send.side_effect = Exception("403 Forbidden: bot was blocked by the user")
+        for kind in ("modified", "reset", "removed"):
+            with self.subTest(kind=kind):
+                self.assertEqual(self.run_main("--notify", kind, "--profile", "anna"), 0)
+        self.assertEqual(self.state("anna"), {"last_uid": 1})
 
     def test_benvenuto_fallito_viene_ritentato(self):
         self.add_profile("nuovo", ["logic"])

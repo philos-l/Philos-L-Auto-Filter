@@ -96,7 +96,7 @@ Quando un utente vuole cambiare le sue parole chiave:
    - **Nuove parole chiave**: le nuove keyword separate da virgola (sostituiscono le vecchie); valgono anche qui le [keyword combinate](#keyword-combinate)
 4. Clicca **Run workflow**
 
-Il Chat ID resta invariato, cambiano solo le keyword.
+Il Chat ID resta invariato, cambiano solo le keyword. L'utente riceve su Telegram un messaggio con le nuove keyword.
 
 > **Nota bene:** solo le **nuove** mail che contengono le nuove keyword vengono processate. Se si vuole riprocessare anche le vecchie mail con la nuova keyword, usa il workflow **Reset State** (sezione B.4). Eliminare e ricreare il profilo non serve: un profilo nuovo parte sempre dalle mail future.
 
@@ -111,7 +111,7 @@ Quando qualcuno vuole disiscriversi:
 3. Scrivi il **Nome del profilo** da rimuovere
 4. Clicca **Run workflow**
 
-Profilo e storico vengono eliminati.
+Profilo e storico vengono eliminati, e l'utente riceve su Telegram un messaggio che lo avvisa della rimozione. Se il messaggio non parte (per esempio perché l'utente ha bloccato il bot) il passaggio **Notify user** risulta fallito, ma la rimozione avviene lo stesso.
 
 ---
 
@@ -125,7 +125,7 @@ Quando serve: se un utente segnala "non ho ricevuto una notifica per una mail ve
    - **Nome del profilo**: lascia vuoto per resettare tutti, oppure scrivi un nome specifico
 4. Clicca **Run workflow**
 
-Alla prossima esecuzione il bot riprocesserà **tutte** le mail dall'inizio (può mandare molte notifiche tutte insieme).
+Alla prossima esecuzione il bot riprocesserà **tutte** le mail dall'inizio (può mandare molte notifiche tutte insieme). Ogni utente resettato riceve subito un messaggio che lo avvisa e gli ricorda le sue keyword.
 
 ---
 

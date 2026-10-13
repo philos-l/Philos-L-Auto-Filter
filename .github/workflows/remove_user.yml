@@ -21,6 +21,15 @@ jobs:
         with:
           node-version: 24
 
+      # Va fatto prima di cancellare il profilo, che contiene il Chat ID.
+      # Un avviso non riuscito non deve impedire la rimozione
+      - name: Notify user
+        continue-on-error: true
+        env:
+          PROFILE: ${{ github.event.inputs.name }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: python3 mail_monitor_multi.py --notify removed --profile "$PROFILE"
+
       - name: Remove profile and state
         run: |
           rm -f "profiles/${{ github.event.inputs.name }}.toml"

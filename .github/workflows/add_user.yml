@@ -64,7 +64,7 @@ jobs:
           IMAP_USER: ${{ secrets.IMAP_USER }}
           IMAP_PASS: ${{ secrets.IMAP_PASS }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-        run: python3 mail_monitor_multi.py --welcome --profile "$PROFILE"
+        run: python3 mail_monitor_multi.py --notify welcome --profile "$PROFILE"
 
       - name: Commit and push
         run: |

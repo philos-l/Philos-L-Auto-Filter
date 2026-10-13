@@ -41,3 +41,14 @@ jobs:
           git add state/
           git diff --staged --quiet || git commit -m "chore: reset profile state"
           git push
+
+      - name: Notify users
+        env:
+          PROFILE: ${{ github.event.inputs.profile }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          if [ -z "$PROFILE" ]; then
+            python3 mail_monitor_multi.py --notify reset
+          else
+            python3 mail_monitor_multi.py --notify reset --profile "$PROFILE"
+          fi

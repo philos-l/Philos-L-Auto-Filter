@@ -75,7 +75,7 @@ Appena l'amministratore ti aggiunge ricevi su Telegram un messaggio di benvenuto
 
 ## Come disiscriversi
 
-Scrivi all'amministratore chiedendo la rimozione del tuo profilo. Lui lo elimina e da quel momento non riceverai più notifiche.
+Scrivi all'amministratore chiedendo la rimozione del tuo profilo. Lui lo elimina e da quel momento non riceverai più notifiche; il bot te lo conferma con un ultimo messaggio.
 
 ---
 

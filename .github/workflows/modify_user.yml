@@ -64,3 +64,9 @@ jobs:
           git add profiles/
           git diff --staged --quiet || git commit -m "feat: update keywords for ${{ github.event.inputs.name }}"
           git push
+
+      - name: Notify user
+        env:
+          PROFILE: ${{ github.event.inputs.name }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: python3 mail_monitor_multi.py --notify modified --profile "$PROFILE"
