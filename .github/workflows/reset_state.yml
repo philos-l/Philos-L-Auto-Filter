@@ -4,9 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       profile:
-        description: 'Nome profilo da azzerare (lascia vuoto per tutti)'
-        required: false
-        default: ''
+        description: 'Nome del profilo da azzerare (es. mario). Per azzerarli tutti scrivi: everyone'
+        required: true
+      confirm:
+        description: 'Confermo: gli utenti azzerati riceveranno di nuovo le notifiche di tutte le vecchie mail'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -16,6 +19,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Check confirmation
+        if: ${{ !inputs.confirm }}
+        run: |
+          echo "::error::Reset non confermato: spunta la casella di conferma e rilancia il workflow."
+          exit 1
+
       - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v6
@@ -28,7 +37,7 @@ jobs:
         # Lo stato viene azzerato, non cancellato: un profilo senza stato
         # sarebbe trattato come nuovo e ripartirebbe dalle mail future
         run: |
-          if [ -z "$PROFILE" ]; then
+          if [ "$PROFILE" = "everyone" ]; then
             python3 mail_monitor_multi.py --reset
           else
             python3 mail_monitor_multi.py --reset --profile "$PROFILE"
@@ -47,7 +56,7 @@ jobs:
           PROFILE: ${{ github.event.inputs.profile }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
-          if [ -z "$PROFILE" ]; then
+          if [ "$PROFILE" = "everyone" ]; then
             python3 mail_monitor_multi.py --notify reset
           else
             python3 mail_monitor_multi.py --notify reset --profile "$PROFILE"

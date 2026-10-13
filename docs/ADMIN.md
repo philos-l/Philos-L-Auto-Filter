@@ -122,7 +122,8 @@ Quando serve: se un utente segnala "non ho ricevuto una notifica per una mail ve
 1. Apri il workflow [Reset State](https://github.com/philos-l/Philos-L-Auto-Filter/actions/workflows/reset_state.yml)
 2. Clicca **Run workflow**
 3. Compila:
-   - **Nome del profilo**: lascia vuoto per resettare tutti, oppure scrivi un nome specifico
+   - **Nome del profilo**: il nome dell'utente da resettare (es. `mario`). Per resettare tutti gli utenti insieme scrivi `everyone`
+   - **Confermo**: spunta la casella. Senza la spunta la run si ferma subito con un errore e non viene resettato nulla
 4. Clicca **Run workflow**
 
 Alla prossima esecuzione il bot riprocesserà **tutte** le mail dall'inizio (può mandare molte notifiche tutte insieme). Ogni utente resettato riceve subito un messaggio che lo avvisa e gli ricorda le sue keyword.
