@@ -2,14 +2,18 @@
 """
 Mail Keyword Monitor — multi-profilo
 Si connette a una casella Gmail via IMAP, legge le mail nuove,
-e per ogni profilo definito in profiles.json cerca le keyword
+e per ogni profilo definito in profiles/*.toml cerca le keyword
 nel soggetto e nel corpo, mandando notifiche Telegram separate.
 
 Uso:
-    python3 mail_monitor.py                        # esecuzione normale
-    python3 mail_monitor.py --dry-run              # stampa i match senza mandare Telegram
-    python3 mail_monitor.py --reset                # azzera tutti gli storici
-    python3 mail_monitor.py --reset --profile foo  # azzera solo il profilo "foo"
+    python3 mail_monitor_multi.py                        # esecuzione normale
+    python3 mail_monitor_multi.py --dry-run              # stampa i match senza mandare Telegram né salvare lo stato
+    python3 mail_monitor_multi.py --check                # controlla la sintassi delle keyword ed esce
+    python3 mail_monitor_multi.py --reset                # azzera tutti gli storici
+    python3 mail_monitor_multi.py --reset --profile foo  # azzera solo il profilo "foo"
+
+Test:
+    python3 -m unittest -v
 """
 
 import argparse

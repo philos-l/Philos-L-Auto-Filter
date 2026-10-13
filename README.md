@@ -3,7 +3,7 @@
 Philos-L Notification Bot permette di ricevere una notifica Telegram ogni volta che arriva una mail sulla mailing list **PHILOS-L** (mailing list di annunci di filosofia accademica) contenente una parola chiave (ad esempio: "ontology", "metaphysics", "call for papers") o qualsiasi altro termine.
 Serve per essere notificati solo degli argomenti che interessano.
 
-Viene eseguito una volta al giorno tramite Github Actions.
+Viene eseguito una volta al giorno tramite Github Actions. L'orario non è fisso: GitHub può avviarlo con qualche ora di ritardo.
 
 ---
 
@@ -41,6 +41,8 @@ Il Chat ID è un numeretto che dice al bot dove mandarti i messaggi. Ce ne sono 
 
 Quali argomenti ti interessano? Il bot cerca quelle parole in tutte le mail — titolo e testo completo — senza distinguere maiuscole e minuscole.
 
+Ogni parola chiave viene cercata **come parola intera**: `logic` trova "Logic" ma non "phenomenological". Vale anche per i plurali: `position` non trova "positions", quindi se ti servono entrambi scrivili tutti e due.
+
 Qualche idea:
 
 ```
@@ -57,7 +59,19 @@ conference
 fellowship
 ```
 
-Puoi aggiungerne quante vuoi, anche frasi di più parole.
+Puoi aggiungerne quante vuoi, anche frasi di più parole. Ricevi una notifica quando una mail ne contiene almeno una.
+
+#### Combinare le parole chiave (facoltativo)
+
+Se vuoi essere più selettivo puoi combinare le parole con `AND`, `OR`, `NOT` e le parentesi. Gli operatori vanno scritti **in maiuscolo**.
+
+| Scrivi | Ricevi le mail che contengono |
+|---|---|
+| `phd AND logic` | sia "phd" sia "logic" |
+| `(phd OR fellowship OR doctoral position) AND (metaphysics OR logic)` | almeno una parola del primo gruppo **e** almeno una del secondo |
+| `phd AND NOT conference` | "phd" ma non "conference" |
+
+Le due parole possono trovarsi in punti diversi della mail, non devono essere vicine. Puoi mescolare combinazioni e parole semplici: mandale separate da virgola, come le altre.
 
 ---
 
@@ -72,6 +86,8 @@ Manda all'amministratore queste tre cose:
 3. **Le tue parole chiave**
 
 Lui aggiunge il tuo profilo e da quel momento le notifiche partono in automatico. Non devi fare altro.
+
+Alla prima esecuzione del bot ricevi un messaggio di conferma con le tue parole chiave. Le notifiche riguardano solo le mail arrivate da quel momento in poi, non quelle vecchie.
 
 ---
 

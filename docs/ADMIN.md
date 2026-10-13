@@ -6,10 +6,10 @@ Questa guida spiega come gestire il progetto **Philos-L Notification Bot** giorn
 
 ## A. Cos'è e come funziona
 
-Il bot monitora la mailing list **PHILOS-L** ogni ora circa minuti. Per ogni utente iscritto, controlla se nelle nuove mail compaiono le sue parole chiave; se sì, gli manda una notifica su Telegram.
+Il bot monitora la mailing list **PHILOS-L** una volta al giorno. Per ogni utente iscritto, controlla se nelle nuove mail compaiono le sue parole chiave; se sì, gli manda una notifica su Telegram.
 
 Tutto gira automaticamente su **GitHub Actions**, un servizio gratuito di GitHub che esegue piccoli programmi a intervalli regolari senza bisogno di tenere acceso un computer. 
-In pratica è come una sveglia che ogni ora controlla la posta e fa partire il bot al posto tuo. 
+In pratica è come una sveglia che una volta al giorno controlla la posta e fa partire il bot al posto tuo. L'orario non è fisso: GitHub può avviarlo con qualche ora di ritardo. 
 Anche che le operazioni di gestione (aggiungere/rimuovere utenti, ecc.) si fanno tutte dalla pagina web del repo, cliccando dei pulsanti.
 
 Il tuo compito è solo:
@@ -67,7 +67,21 @@ Quando qualcuno ti manda nome, Chat ID e parole chiave:
 4. Clicca **Run workflow**
 5. Aspetta che la run finisca (pallino verde ✅)
 
-Da quel momento l'utente riceverà notifiche alla prossima esecuzione.
+Alla prossima esecuzione del bot l'utente riceve un solo messaggio di conferma con le sue keyword. Le notifiche partono dalle mail arrivate dopo: quelle già presenti in casella non gli vengono mandate.
+
+> **Se la run del bot diventa rossa subito dopo aver aggiunto un utente**, quasi sempre il Chat ID è sbagliato oppure l'utente non ha ancora premuto **Avvia** sul bot. Il messaggio di conferma viene ritentato a ogni esecuzione finché non va a buon fine: correggi il profilo (rimuovilo e ricrealo) o chiedi all'utente di avviare il bot.
+
+#### Keyword combinate
+
+Un utente può chiedere combinazioni di parole con `AND`, `OR`, `NOT` e parentesi (la sintassi è spiegata nel [README](/README.md)). Vanno scritte nel campo **Parole chiave** così come sono, con gli operatori in maiuscolo:
+
+```
+(phd OR fellowship OR doctoral position) AND (metaphysics OR logic), call for papers
+```
+
+In questo esempio le voci sono due, separate dalla virgola: la combinazione e `call for papers`. **Dentro una combinazione non usare la virgola**, usa `OR`.
+
+Se la combinazione è scritta male (per esempio manca una parentesi), la run diventa rossa al passaggio **Check keywords** e il profilo non viene salvato: correggi e rilancia.
 
 ---
 
@@ -79,12 +93,12 @@ Quando un utente vuole cambiare le sue parole chiave:
 2. Clicca **Run workflow**
 3. Compila:
    - **Nome del profilo**: il suo nome (es. `mario`)
-   - **Nuove parole chiave**: le nuove keyword separate da virgola (sostituiscono le vecchie)
+   - **Nuove parole chiave**: le nuove keyword separate da virgola (sostituiscono le vecchie); valgono anche qui le [keyword combinate](#keyword-combinate)
 4. Clicca **Run workflow**
 
 Il Chat ID resta invariato, cambiano solo le keyword.
 
-> **Nota bene:** solo le **nuove** mail che contengono le nuove keyword vengono processate. Se si vuole riprocessare anche le vecchie mail con la nuova keyword, conviene eliminare il profilo e ricrearlo con lo stesso nome e Chat ID.
+> **Nota bene:** solo le **nuove** mail che contengono le nuove keyword vengono processate. Se si vuole riprocessare anche le vecchie mail con la nuova keyword, usa il workflow **Reset State** (sezione B.4). Eliminare e ricreare il profilo non serve: un profilo nuovo parte sempre dalle mail future.
 
 ---
 
@@ -138,6 +152,8 @@ Se vedi pallini rossi recenti, vai al punto C.2.
 4. Clicca sul passaggio rosso per espanderlo
 5. Copia tutto il testo dell'errore
 6. Manda allo sviluppatore il messaggio + il link della run
+
+Un caso che puoi risolvere da solo: se nel passaggio **Run mail monitor** leggi `ERRORE Telegram` sotto il nome di un profilo, il bot non riesce a scrivere a quell'utente (di solito perché ha bloccato il bot o il Chat ID è sbagliato). Le notifiche degli altri utenti partono comunque, ma la run resta rossa ogni giorno finché il problema non è risolto: contatta l'utente oppure rimuovi il suo profilo (sezione B.3).
 
 ![Esempio di esecuzione fallita](/docs/images/image-5.png)
 *Esempio di esecuzione fallita*
