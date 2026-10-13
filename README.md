@@ -43,27 +43,9 @@ Quali argomenti ti interessano? Il bot cerca quelle parole in tutte le mail — 
 
 Ogni parola chiave viene cercata **all'inizio delle parole**: `position` trova "position" e "positions", `logic` trova "logic" e "logical" ma non "phenomenological". Per questo conviene evitare parole chiave molto corte: `art` troverebbe anche "article".
 
-Qualche idea:
+Puoi sceglierne quante vuoi, anche frasi di più parole come `call for papers`. Ricevi una notifica quando una mail ne contiene almeno una.
 
-```
-phd
-postdoc
-call for papers
-metaphysics
-ontology
-phenomenology
-philosophy of mind
-kant
-wittgenstein
-conference
-fellowship
-```
-
-Puoi aggiungerne quante vuoi, anche frasi di più parole. Ricevi una notifica quando una mail ne contiene almeno una.
-
-#### Combinare le parole chiave (facoltativo)
-
-Se vuoi essere più selettivo puoi combinare le parole con `AND`, `OR`, `NOT` e le parentesi. Gli operatori vanno scritti **in maiuscolo**.
+Se vuoi essere più selettivo puoi combinarle con `AND`, `OR`, `NOT` e le parentesi, scritti **in maiuscolo**:
 
 | Scrivi | Ricevi le mail che contengono |
 |---|---|
@@ -71,7 +53,7 @@ Se vuoi essere più selettivo puoi combinare le parole con `AND`, `OR`, `NOT` e 
 | `(phd OR fellowship OR doctoral position) AND (metaphysics OR logic)` | almeno una parola del primo gruppo **e** almeno una del secondo |
 | `phd AND NOT conference` | "phd" ma non "conference" |
 
-Le due parole possono trovarsi in punti diversi della mail, non devono essere vicine. Puoi mescolare combinazioni e parole semplici: mandale separate da virgola, come le altre.
+Le parole di una combinazione possono trovarsi in punti diversi della mail, non devono essere vicine. Puoi mescolare combinazioni e parole semplici: mandale separate da virgola.
 
 ---
 
