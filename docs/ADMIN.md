@@ -130,6 +130,22 @@ Alla prossima esecuzione il bot riprocesserà **tutte** le mail dall'inizio (pu�
 
 ---
 
+### B.5 — Cambiare il Chat ID di un utente
+
+Quando serve: l'utente ha cambiato account Telegram, oppure il Chat ID inserito all'inizio era sbagliato. Non c'è un workflow apposito: si usa di nuovo **Add User** con lo stesso nome, che sovrascrive il profilo.
+
+1. Apri la cartella [Profiles](https://github.com/philos-l/Philos-L-Auto-Filter/tree/main/profiles), clicca sul file dell'utente (es. `mario.toml`) e copia le sue keyword attuali
+2. Apri il workflow [Add User](https://github.com/philos-l/Philos-L-Auto-Filter/actions/workflows/add_user.yml) e clicca **Run workflow**
+3. Compila:
+   - **Nome del profilo**: lo **stesso** nome di prima (es. `mario`)
+   - **Chat ID**: il nuovo Chat ID
+   - **Parole chiave**: le keyword copiate al punto 1, separate da virgola
+4. Clicca **Run workflow**
+
+L'utente riceve il messaggio di benvenuto sul nuovo Chat ID e continua a ricevere le notifiche da dove era rimasto: non perde nessuna mail e non riceve di nuovo quelle vecchie. Se la run diventa rossa al passaggio "Send welcome message", il nuovo Chat ID non funziona e il profilo resta quello di prima.
+
+---
+
 ## C. Verificare che tutto funzioni
 
 ### C.1 — Controllo periodico
@@ -144,6 +160,8 @@ Vedrai una lista di run con dei pallini:
 *Pagina Principale di Github Actions*
 
 Se vedi pallini rossi recenti, vai al punto C.2.
+
+Nella lista compaiono anche run chiamate **Tests**. Non fanno parte del funzionamento quotidiano: sono controlli automatici sul codice, partono da soli quando lo sviluppatore lo modifica e non leggono la posta né mandano messaggi. Non devi mai lanciarle tu. Se una run **Tests** è rossa il bot continua comunque a funzionare: manda il link allo sviluppatore e basta.
 
 ### C.2 — Cosa fare se un workflow fallisce
 
