@@ -15,6 +15,7 @@ Uso:
 import argparse
 import email
 import email.header
+import functools
 import html
 import imaplib
 import json
@@ -189,9 +190,19 @@ def clean_body(text):
     return text
 
 
+@functools.lru_cache(maxsize=None)
+def keyword_regex(keyword):
+    """
+    Regex che trova la keyword solo come parola (o frase) intera, senza
+    distinguere maiuscole e minuscole: "logic" non scatta su "phenomenological".
+    """
+    words = r"\s+".join(re.escape(w) for w in keyword.split())
+    return re.compile(rf"(?<!\w){words}(?!\w)", re.IGNORECASE)
+
+
 def matches(subject, body, keywords):
-    text = (subject + " " + body).lower()
-    return [kw for kw in keywords if kw.lower() in text]
+    text = subject + " " + body
+    return [kw for kw in keywords if kw.strip() and keyword_regex(kw).search(text)]
 
 
 def send_telegram(token, chat_id, text):
