@@ -69,7 +69,7 @@ Manda all'amministratore queste tre cose:
 
 Lui aggiunge il tuo profilo e da quel momento le notifiche partono in automatico. Non devi fare altro.
 
-Alla prima esecuzione del bot ricevi un messaggio di conferma con le tue parole chiave. Le notifiche riguardano solo le mail arrivate da quel momento in poi, non quelle vecchie.
+Appena l'amministratore ti aggiunge ricevi su Telegram un messaggio di benvenuto con le tue parole chiave. Le notifiche riguardano solo le mail arrivate da quel momento in poi, non quelle vecchie.
 
 ---
 

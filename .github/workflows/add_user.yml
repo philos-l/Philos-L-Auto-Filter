@@ -56,10 +56,20 @@ jobs:
           PROFILE: ${{ github.event.inputs.name }}
         run: python3 mail_monitor_multi.py --check --profile "$PROFILE"
 
+      # Se l'invio fallisce (Chat ID sbagliato, bot mai avviato) il profilo non viene salvato
+      - name: Send welcome message
+        env:
+          PROFILE: ${{ github.event.inputs.name }}
+          IMAP_HOST: ${{ secrets.IMAP_HOST }}
+          IMAP_USER: ${{ secrets.IMAP_USER }}
+          IMAP_PASS: ${{ secrets.IMAP_PASS }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: python3 mail_monitor_multi.py --welcome --profile "$PROFILE"
+
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add profiles/
+          git add profiles/ state/
           git commit -m "feat: add profile for ${{ github.event.inputs.name }}"
           git push

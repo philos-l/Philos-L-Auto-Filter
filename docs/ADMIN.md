@@ -67,9 +67,9 @@ Quando qualcuno ti manda nome, Chat ID e parole chiave:
 4. Clicca **Run workflow**
 5. Aspetta che la run finisca (pallino verde ✅)
 
-Alla prossima esecuzione del bot l'utente riceve un solo messaggio di conferma con le sue keyword. Le notifiche partono dalle mail arrivate dopo: quelle già presenti in casella non gli vengono mandate.
+Appena la run finisce, l'utente riceve su Telegram un messaggio di benvenuto con le sue keyword. Le notifiche partono dalle mail arrivate da quel momento: quelle già presenti in casella non gli vengono mandate.
 
-> **Se la run del bot diventa rossa subito dopo aver aggiunto un utente**, quasi sempre il Chat ID è sbagliato oppure l'utente non ha ancora premuto **Avvia** sul bot. Il messaggio di conferma viene ritentato a ogni esecuzione finché non va a buon fine: correggi il profilo (rimuovilo e ricrealo) o chiedi all'utente di avviare il bot.
+> **Se la run diventa rossa al passaggio "Send welcome message"**, il bot non è riuscito a scrivere all'utente: quasi sempre il Chat ID è sbagliato oppure l'utente non ha ancora premuto **Avvia** sul bot. In questo caso il profilo **non viene salvato**: sistema il problema e rilancia Add User.
 
 #### Keyword combinate
 

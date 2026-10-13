@@ -9,6 +9,7 @@ Uso:
     python3 mail_monitor_multi.py                        # esecuzione normale
     python3 mail_monitor_multi.py --dry-run              # stampa i match senza mandare Telegram né salvare lo stato
     python3 mail_monitor_multi.py --check                # controlla la sintassi delle keyword ed esce
+    python3 mail_monitor_multi.py --welcome --profile foo  # manda il benvenuto al profilo "foo"
     python3 mail_monitor_multi.py --reset                # azzera tutti gli storici
     python3 mail_monitor_multi.py --reset --profile foo  # azzera solo il profilo "foo"
 
@@ -345,9 +346,11 @@ def format_message(subject, sender, date_str, body, matched_kw, archive_link="")
 def format_welcome(keywords):
     kw_list = "\n".join(f"• <code>{html.escape(k)}</code>" for k in keywords)
     return (
-        f"✅ <b>PHILOS-L Monitor</b>\n"
-        f"Profilo attivo. Riceverai una notifica per ogni nuova mail "
-        f"che corrisponde alle tue keyword:\n{kw_list}"
+        f"👋 <b>Ciao, qui PHILOS-L Monitor!</b>\n\n"
+        f"Leggo per te la mailing list PHILOS-L e ti scrivo solo quando "
+        f"arriva un annuncio che ti interessa, così non devi scorrerla tutta.\n\n"
+        f"Da adesso ti avviso per ogni nuova mail che corrisponde a:\n{kw_list}\n\n"
+        f"Per cambiare le parole chiave o disiscriverti, scrivi all'amministratore."
     )
 
 
@@ -420,6 +423,36 @@ def process_profile(p, all_uids, parsed, last_uid, dry_run=False):
     return notified, failed, last_uid
 
 
+def open_mailbox():
+    """
+    Si connette alla casella e ritorna (imap, UID presenti in ordine crescente).
+    Esce con errore se la connessione o la ricerca falliscono.
+    """
+    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Connessione a {IMAP_HOST}...")
+    try:
+        imap = imaplib.IMAP4_SSL(IMAP_HOST)
+        imap.login(IMAP_USER, IMAP_PASS)
+    except imaplib.IMAP4.error as e:
+        print(f"ERRORE login IMAP: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    status, _ = imap.select(f'"{IMAP_LABEL}"', readonly=True)
+    if status != "OK":
+        print(f"ERRORE: label '{IMAP_LABEL}' non trovata.", file=sys.stderr)
+        imap.logout()
+        sys.exit(1)
+
+    status, data = imap.uid("search", None, "ALL")
+    if status != "OK":
+        print("ERRORE search IMAP.", file=sys.stderr)
+        imap.logout()
+        sys.exit(1)
+
+    all_uids = sorted(int(u) for u in data[0].split())
+    print(f"Mail nella label: {len(all_uids)}")
+    return imap, all_uids
+
+
 def main():
     parser = argparse.ArgumentParser(description="Mail Keyword Monitor multi-profilo")
     parser.add_argument("--dry-run", action="store_true",
@@ -428,11 +461,16 @@ def main():
                         help="Azzera lo storico (tutti i profili o solo --profile)")
     parser.add_argument("--check", action="store_true",
                         help="Controlla la sintassi delle keyword ed esce")
+    parser.add_argument("--welcome", action="store_true",
+                        help="Manda il benvenuto al profilo --profile e, se è nuovo, "
+                             "lo fa partire dalle mail future")
     parser.add_argument("--profile", metavar="NAME", type=str.strip,
                         help="Limita l'esecuzione (o il reset) a un singolo profilo")
     args = parser.parse_args()
     if args.profile is not None and not args.profile:
         parser.error("--profile non può essere vuoto")
+    if args.welcome and not args.profile:
+        parser.error("--welcome richiede --profile")
 
     profiles = load_profiles()
 
@@ -467,29 +505,21 @@ def main():
     if not profiles:
         sys.exit(1)
 
-    # --- Connessione IMAP ---
-    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Connessione a {IMAP_HOST}...")
-    try:
-        imap = imaplib.IMAP4_SSL(IMAP_HOST)
-        imap.login(IMAP_USER, IMAP_PASS)
-    except imaplib.IMAP4.error as e:
-        print(f"ERRORE login IMAP: {e}", file=sys.stderr)
-        sys.exit(1)
+    if args.welcome:
+        p = profiles[0]
+        # Un profilo senza stato è nuovo: parte dall'ultima mail in casella
+        newest = None
+        if load_state(p["name"]) is None:
+            imap, all_uids = open_mailbox()
+            imap.logout()
+            newest = all_uids[-1] if all_uids else 0
+        if not welcome_profile(p, args.dry_run):
+            sys.exit(1)
+        if newest is not None and not args.dry_run:
+            save_state(p["name"], newest)
+        return
 
-    status, _ = imap.select(f'"{IMAP_LABEL}"', readonly=True)
-    if status != "OK":
-        print(f"ERRORE: label '{IMAP_LABEL}' non trovata.", file=sys.stderr)
-        imap.logout()
-        sys.exit(1)
-
-    status, data = imap.uid("search", None, "ALL")
-    if status != "OK":
-        print("ERRORE search IMAP.", file=sys.stderr)
-        imap.logout()
-        sys.exit(1)
-
-    all_uids = sorted(int(u) for u in data[0].split())
-    print(f"Mail nella label: {len(all_uids)}")
+    imap, all_uids = open_mailbox()
 
     # Carica gli stati di tutti i profili. Un profilo senza stato è nuovo e
     # parte dall'ultima mail in casella, senza notifiche per quelle vecchie

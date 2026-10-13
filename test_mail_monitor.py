@@ -216,8 +216,36 @@ class MainTest(unittest.TestCase):
         self.assertEqual(self.run_main(), 0)
         self.assertEqual(self.imap.fetched, [])
         self.assertEqual(len(self.sent_texts()), 1)
-        self.assertIn("Profilo attivo", self.sent_texts()[0])
+        self.assertIn("Ciao", self.sent_texts()[0])
         self.assertEqual(self.state("nuovo"), {"last_uid": 3})
+
+    def test_welcome_profilo_nuovo(self):
+        self.add_profile("nuovo", ["logic", "(phd OR postdoc) AND kant"])
+        self.assertEqual(self.run_main("--welcome", "--profile", "nuovo"), 0)
+        self.assertEqual(self.imap.fetched, [])
+        self.assertEqual(len(self.sent_texts()), 1)
+        self.assertIn("(phd OR postdoc) AND kant", self.sent_texts()[0])
+        self.assertEqual(self.state("nuovo"), {"last_uid": 3})
+
+        # Il run giornaliero successivo non rimanda il benvenuto
+        self.assertEqual(self.run_main(), 0)
+        self.assertEqual(len(self.sent_texts()), 1)
+
+    def test_welcome_fallito_non_salva_lo_stato(self):
+        self.add_profile("nuovo", ["logic"])
+        self.send.side_effect = Exception("400 Bad Request: chat not found")
+        self.assertEqual(self.run_main("--welcome", "--profile", "nuovo"), 1)
+        self.assertIsNone(self.state("nuovo"))
+
+    def test_welcome_profilo_esistente_non_tocca_lo_stato(self):
+        self.add_profile("anna", ["logic"], state={"last_uid": 1})
+        self.assertEqual(self.run_main("--welcome", "--profile", "anna"), 0)
+        self.assertEqual(len(self.sent_texts()), 1)
+        self.assertEqual(self.state("anna"), {"last_uid": 1})
+
+    def test_welcome_richiede_profile(self):
+        self.add_profile("anna", ["logic"])
+        self.assertEqual(self.run_main("--welcome"), 2)
 
     def test_benvenuto_fallito_viene_ritentato(self):
         self.add_profile("nuovo", ["logic"])
