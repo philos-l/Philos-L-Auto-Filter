@@ -130,16 +130,24 @@ def state_file(profile_name):
 
 
 def load_state(profile_name):
+    """
+    Ritorna l'ultimo UID già controllato per il profilo. Gli UID IMAP sono
+    crescenti, quindi tutte le mail con UID minore o uguale sono già gestite.
+    """
     path = state_file(profile_name)
-    if os.path.exists(path):
-        with open(path, "r") as f:
-            return json.load(f)
-    return {"seen_uids": []}
+    if not os.path.exists(path):
+        return 0
+    with open(path, "r") as f:
+        state = json.load(f)
+    if "last_uid" in state:
+        return int(state["last_uid"])
+    # Vecchio formato: lista di tutti gli UID visti
+    return max((int(u) for u in state.get("seen_uids", [])), default=0)
 
 
-def save_state(profile_name, state):
+def save_state(profile_name, last_uid):
     with open(state_file(profile_name), "w") as f:
-        json.dump(state, f, indent=2)
+        json.dump({"last_uid": last_uid}, f, indent=2)
 
 
 def decode_header_str(value):
@@ -217,29 +225,27 @@ def format_message(subject, sender, date_str, body, matched_kw, archive_link="")
     )
 
 
-def process_profile(p, all_uids, parsed, seen, dry_run=False):
+def process_profile(p, all_uids, parsed, last_uid, dry_run=False):
     """
-    Cerca le keyword del profilo nelle mail non ancora viste e manda le notifiche.
-    Aggiorna `seen` sul posto e ritorna (notificate, fallite). Una mail la cui
-    notifica fallisce non viene segnata come vista, così viene ritentata.
+    Cerca le keyword del profilo nelle mail con UID maggiore di `last_uid`
+    (in ordine crescente) e manda le notifiche.
+    Ritorna (notificate, fallito, nuovo last_uid). Se un invio fallisce il
+    profilo si ferma lì: `last_uid` resta alla mail precedente, così il
+    prossimo run riparte da quella non notificata.
     """
     keywords = p.get("keywords", [])
     tg_chat  = p.get("telegram_chat_id", "")
     notified = 0
-    failed   = 0
+    failed   = False
 
-    for uid_bytes in all_uids:
-        uid = uid_bytes.decode()
-        if uid in seen:
-            continue
-        if uid not in parsed:
-            seen.add(uid)
+    for uid in all_uids:
+        if uid <= last_uid:
             continue
 
-        m = parsed[uid]
-        matched_kw = matches(m["subject"], m["body"], keywords)
+        m = parsed.get(uid)
+        matched_kw = matches(m["subject"], m["body"], keywords) if m else []
         if not matched_kw:
-            seen.add(uid)
+            last_uid = uid
             continue
 
         print(f"  MATCH [{', '.join(matched_kw)}]: {m['subject']}")
@@ -255,8 +261,8 @@ def process_profile(p, all_uids, parsed, seen, dry_run=False):
                 print("  Notifica inviata.")
             except Exception as e:
                 print(f"  ERRORE Telegram: {e}", file=sys.stderr)
-                failed += 1
-                continue
+                failed = True
+                break
         else:
             print(f"  [dry-run] Messaggio:\n")
             print(format_message(m["subject"], m["sender"],
@@ -264,10 +270,10 @@ def process_profile(p, all_uids, parsed, seen, dry_run=False):
                                  m.get("archive_link", "")))
             print()
 
-        seen.add(uid)
+        last_uid = uid
         notified += 1
 
-    return notified, failed
+    return notified, failed, last_uid
 
 
 def main():
@@ -290,7 +296,7 @@ def main():
 
     if args.reset:
         for p in profiles:
-            save_state(p["name"], {"seen_uids": []})
+            save_state(p["name"], 0)
             print(f"Storico azzerato: {p['name']}")
         return
 
@@ -315,30 +321,22 @@ def main():
         imap.logout()
         sys.exit(1)
 
-    all_uids = data[0].split()
+    all_uids = sorted(int(u) for u in data[0].split())
     print(f"Mail nella label: {len(all_uids)}")
 
     # Carica gli stati di tutti i profili
-    all_seen = {}
-    for p in profiles:
-        st = load_state(p["name"])
-        all_seen[p["name"]] = set(st.get("seen_uids", []))
+    last_uids = {p["name"]: load_state(p["name"]) for p in profiles}
 
     # Determina quali UID fetchare (almeno un profilo non li ha ancora visti)
-    uids_to_fetch = set()
-    for uid_bytes in all_uids:
-        uid = uid_bytes.decode()
-        for p in profiles:
-            if uid not in all_seen[p["name"]]:
-                uids_to_fetch.add(uid)
-                break
+    oldest = min(last_uids.values())
+    uids_to_fetch = [uid for uid in all_uids if uid > oldest]
 
     print(f"Mail nuove da processare: {len(uids_to_fetch)}")
 
     # Fetch e parsing — una volta sola per tutte le mail
     parsed = {}
     for uid in uids_to_fetch:
-        status, msg_data = imap.uid("fetch", uid, "(RFC822)")
+        status, msg_data = imap.uid("fetch", str(uid), "(RFC822)")
         if status != "OK" or not msg_data or msg_data[0] is None:
             continue
         raw = msg_data[0][1]
@@ -365,14 +363,14 @@ def main():
     errors = 0
     for p in profiles:
         print(f"\n── Profilo: {p['name']} ──")
-        seen = all_seen[p["name"]]
-        notified, failed = process_profile(p, all_uids, parsed, seen, args.dry_run)
-        errors += failed
+        notified, failed, last_uid = process_profile(
+            p, all_uids, parsed, last_uids[p["name"]], args.dry_run)
 
-        save_state(p["name"], {"seen_uids": list(seen)[-5000:]})
+        save_state(p["name"], last_uid)
         print(f"  Notificati: {notified}")
         if failed:
-            print(f"  Notifiche fallite (ritentate al prossimo run): {failed}")
+            errors += 1
+            print("  Invio fallito: il profilo riprende da quella mail al prossimo run.")
 
     # Esce con errore così il run risulta fallito e l'amministratore se ne accorge
     if errors:
