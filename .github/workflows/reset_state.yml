@@ -23,13 +23,15 @@ jobs:
           node-version: 24
 
       - name: Reset state
+        env:
+          PROFILE: ${{ github.event.inputs.profile }}
+        # Lo stato viene azzerato, non cancellato: un profilo senza stato
+        # sarebbe trattato come nuovo e ripartirebbe dalle mail future
         run: |
-          if [ -z "${{ github.event.inputs.profile }}" ]; then
-            rm -f state/*.json
-            echo "Azzerati tutti i profili"
+          if [ -z "$PROFILE" ]; then
+            python3 mail_monitor_multi.py --reset
           else
-            rm -f "state/${{ github.event.inputs.profile }}.json"
-            echo "Azzerato profilo: ${{ github.event.inputs.profile }}"
+            python3 mail_monitor_multi.py --reset --profile "$PROFILE"
           fi
 
       - name: Commit

@@ -136,10 +136,11 @@ def load_state(profile_name):
     """
     Ritorna l'ultimo UID già controllato per il profilo. Gli UID IMAP sono
     crescenti, quindi tutte le mail con UID minore o uguale sono già gestite.
+    Ritorna None se il profilo non ha ancora uno stato, cioè è nuovo.
     """
     path = state_file(profile_name)
     if not os.path.exists(path):
-        return 0
+        return None
     with open(path, "r") as f:
         state = json.load(f)
     if "last_uid" in state:
@@ -336,6 +337,33 @@ def format_message(subject, sender, date_str, body, matched_kw, archive_link="")
     )
 
 
+def format_welcome(keywords):
+    kw_list = "\n".join(f"• <code>{html.escape(k)}</code>" for k in keywords)
+    return (
+        f"✅ <b>PHILOS-L Monitor</b>\n"
+        f"Profilo attivo. Riceverai una notifica per ogni nuova mail "
+        f"che corrisponde alle tue keyword:\n{kw_list}"
+    )
+
+
+def welcome_profile(p, dry_run=False):
+    """
+    Manda il messaggio di benvenuto a un profilo nuovo. Ritorna False se
+    l'invio fallisce (es. Chat ID sbagliato o bot mai avviato dall'utente).
+    """
+    text = format_welcome(p.get("keywords", []))
+    if dry_run:
+        print(f"  [dry-run] Messaggio:\n\n{text}\n")
+        return True
+    try:
+        send_telegram(TELEGRAM_BOT_TOKEN, p.get("telegram_chat_id", ""), text)
+        print("  Benvenuto inviato.")
+        return True
+    except Exception as e:
+        print(f"  ERRORE Telegram: {e}", file=sys.stderr)
+        return False
+
+
 def process_profile(p, all_uids, parsed, last_uid, dry_run=False):
     """
     Cerca le keyword del profilo nelle mail con UID maggiore di `last_uid`
@@ -398,6 +426,8 @@ def main():
     parser.add_argument("--profile", metavar="NAME", type=str.strip,
                         help="Limita l'esecuzione (o il reset) a un singolo profilo")
     args = parser.parse_args()
+    if args.profile is not None and not args.profile:
+        parser.error("--profile non può essere vuoto")
 
     profiles = load_profiles()
 
@@ -456,8 +486,17 @@ def main():
     all_uids = sorted(int(u) for u in data[0].split())
     print(f"Mail nella label: {len(all_uids)}")
 
-    # Carica gli stati di tutti i profili
-    last_uids = {p["name"]: load_state(p["name"]) for p in profiles}
+    # Carica gli stati di tutti i profili. Un profilo senza stato è nuovo e
+    # parte dall'ultima mail in casella, senza notifiche per quelle vecchie
+    newest       = all_uids[-1] if all_uids else 0
+    last_uids    = {}
+    new_profiles = set()
+    for p in profiles:
+        last_uid = load_state(p["name"])
+        if last_uid is None:
+            new_profiles.add(p["name"])
+            last_uid = newest
+        last_uids[p["name"]] = last_uid
 
     # Determina quali UID fetchare (almeno un profilo non li ha ancora visti)
     oldest = min(last_uids.values())
@@ -494,10 +533,18 @@ def main():
 
     for p in profiles:
         print(f"\n── Profilo: {p['name']} ──")
+        if p["name"] in new_profiles:
+            print("  Profilo nuovo: riceverà solo le mail in arrivo da ora in poi.")
+            if not welcome_profile(p, args.dry_run):
+                # Senza stato salvato resta "nuovo" e il benvenuto viene ritentato
+                errors += 1
+                continue
+
         notified, failed, last_uid = process_profile(
             p, all_uids, parsed, last_uids[p["name"]], args.dry_run)
 
-        save_state(p["name"], last_uid)
+        if not args.dry_run:
+            save_state(p["name"], last_uid)
         print(f"  Notificati: {notified}")
         if failed:
             errors += 1
